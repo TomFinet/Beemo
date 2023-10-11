@@ -1,0 +1,1 @@
+A C++ wrapper around Windows sockets.
