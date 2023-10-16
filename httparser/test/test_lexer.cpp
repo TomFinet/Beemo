@@ -4,8 +4,9 @@
 #include <vector>
 #include <iostream>
 
-#include <http_parser.h>
-#include <http_req.h>
+#include <httparser/http_parser.h>
+#include <httparser/http_req.h>
+#include <httparser/http_keyword_map.h>
 
 TEST(LexerTest, Lex_Get_Valid) {
     std::string get = 

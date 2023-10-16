@@ -3,36 +3,14 @@
 #include <string>
 #include <vector>
 
+#include <httparser/http_keyword_map.h>
+
 namespace httparser {
 
-/* All allowed HTTP request methods. */
-namespace method {
-    constexpr auto& GET = "GET"; 
-    constexpr auto& POST = "POST";
-    constexpr auto& OPTIONS = "OPTIONS";
-    constexpr auto& HEAD = "HEAD";
-    constexpr auto& PUT = "PUT";
-    constexpr auto& DELETE = "DELETE";
-    constexpr auto& TRACE = "TRACE";
-    constexpr auto& CONNECT = "CONNECT";
-    constexpr auto& EXTENSION = "EXTENSION";
-}
-
-enum encoding_t {
-    CHUNKED, IDENTITY, GZIP, COMPRESS, DEFLATE
-};
-
-enum conn_t {
-    KEEP_ALIVE, CLOSE
-};
-
-/**
- * The protocols supported by this server.
- *
- * TODO: this should not be in parser. Really parser should be able to handle
- * any http request. Thus supported protocols is a limitation/concern of the server.
- */
-//const char* supported_protocols[] = {"HTTP/1.1", "Websockets"}; 
+constexpr auto &connection_header = "Connection:";
+constexpr auto &encoding_header = "Transfer-Encoding:";
+constexpr auto &host_header = "Host:";
+constexpr auto &content_type_header = "Content-Type:";
 
 /**
  * Refer to section 14.23 of RFC2616.
@@ -49,7 +27,7 @@ struct host_t {
  */
 struct http_req {
 
-        std::string method;
+        method_t method;
 
         /**
          * May be an absolute uri, absolute path, authority,
@@ -63,10 +41,10 @@ struct http_req {
         std::string version;
 
         /**
-         * Optional connection options. For example, the "close" option
+         * Optional connection setting. For example, the "close" option
          * signals the connection will be closed on response completion. 
          */
-        std::vector<conn_t> conn_options;         
+        conn_t conn_option;         
 
         /**
          * The encoding applied to the http request body. 
@@ -86,6 +64,8 @@ struct http_req {
          * Missing port information falls back to default.
          */
         host_t host;
+
+        content_type_t content_type;
 
         /**
          * The actual request body.

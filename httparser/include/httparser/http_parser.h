@@ -2,8 +2,10 @@
 
 #include <string>
 #include <vector>
+#include <stdexcept>
 
-#include <http_req.h>
+#include <httparser/http_keyword_map.h>
+#include <httparser/http_req.h>
 
 namespace httparser {
     
@@ -42,7 +44,17 @@ class http_parser {
 
         void parse_req_line(const line_t &req_line, http_req &req);
 
-        void parse_header(const line_t &general_header, http_req &req);
+        int parse_method(const token_t &method_val, http_req &req);
+
+        int parse_header(const line_t &general_header, http_req &req);
+
+        int parse_header_connection(const token_t &conn_val, http_req &req);
+
+        int parse_header_encoding(const token_t &encoding_val, http_req &req);
+
+        int parse_header_host(const token_t &host_val, http_req &req);
+
+        int parse_body(const line_t &body_line, http_req &req);
 };
 
 }
