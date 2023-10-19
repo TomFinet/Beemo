@@ -1,6 +1,6 @@
 /* C++ code produced by gperf version 3.0.1 */
-/* Command-line: 'C:\\Workspace\\Tom Finet\\Main\\Source\\httcpp\\httparser\\gperf\\gperf.exe' -L C++ -t -K key 'C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf'  */
-/* Computed positions: -k'1,6' */
+/* Command-line: 'C:\\Workspace\\Tom Finet\\Main\\Source\\httcpp\\httparser\\gperf\\gperf.exe' --language=C++ --struct-type --ignore-case -K key --includes --class-name=http_keyword_map --enum 'C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf'  */
+/* Computed positions: -k'2,6' */
 
 #pragma once
 
@@ -31,40 +31,56 @@
 #error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gnu-gperf@gnu.org>."
 #endif
 
-#line 1 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-
-namespace httparser {
-    enum method_t {
-        GET, POST, OPTIONS, HEAD, PUT,
-        DELETE, TRACE, CONNECT, EXTENSION
-    };
-
-    enum conn_t {
-        KEEP_ALIVE, CLOSE
-    };
-
-    enum encoding_t {
-        CHUNKED, IDENTITY, GZIP, COMPRESS, DEFLATE
-    };
-
-    enum content_type_t {
-        HTML, JSON
-    };
-}
-#line 21 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
+#include <httparser/http_req.h>
 struct http_kvp {
     const char* key;
     int value;
 };
-
-#define TOTAL_KEYWORDS 18
-#define MIN_WORD_LENGTH 3
-#define MAX_WORD_LENGTH 10
-#define MIN_HASH_VALUE 3
-#define MAX_HASH_VALUE 29
+#include <string.h>
 /* maximum key range = 27, duplicates = 0 */
 
-class Perfect_Hash
+#ifndef GPERF_DOWNCASE
+#define GPERF_DOWNCASE 1
+static unsigned char gperf_downcase[256] =
+  {
+      0,   1,   2,   3,   4,   5,   6,   7,   8,   9,  10,  11,  12,  13,  14,
+     15,  16,  17,  18,  19,  20,  21,  22,  23,  24,  25,  26,  27,  28,  29,
+     30,  31,  32,  33,  34,  35,  36,  37,  38,  39,  40,  41,  42,  43,  44,
+     45,  46,  47,  48,  49,  50,  51,  52,  53,  54,  55,  56,  57,  58,  59,
+     60,  61,  62,  63,  64,  97,  98,  99, 100, 101, 102, 103, 104, 105, 106,
+    107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121,
+    122,  91,  92,  93,  94,  95,  96,  97,  98,  99, 100, 101, 102, 103, 104,
+    105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119,
+    120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134,
+    135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149,
+    150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164,
+    165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179,
+    180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194,
+    195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209,
+    210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224,
+    225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239,
+    240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254,
+    255
+  };
+#endif
+
+#ifndef GPERF_CASE_STRCMP
+#define GPERF_CASE_STRCMP 1
+static int
+gperf_case_strcmp ( const char *s1,  const char *s2)
+{
+  for (;;)
+    {
+      unsigned char c1 = gperf_downcase[(unsigned char)*s1++];
+      unsigned char c2 = gperf_downcase[(unsigned char)*s2++];
+      if (c1 != 0 && c1 == c2)
+        continue;
+      return (int)c1 - (int)c2;
+    }
+}
+#endif
+
+class http_keyword_map
 {
 private:
   static inline unsigned int hash (const char *str, unsigned int len);
@@ -73,7 +89,7 @@ public:
 };
 
 inline unsigned int
-Perfect_Hash::hash (const char *str, unsigned int len)
+http_keyword_map::hash ( const char *str,  unsigned int len)
 {
   static unsigned char asso_values[] =
     {
@@ -83,13 +99,13 @@ Perfect_Hash::hash (const char *str, unsigned int len)
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
-      30, 30, 30, 30, 30, 30, 30, 10,  0, 10,
-      30, 10, 20, 30, 30, 30, 30, 30,  5,  5,
-       0, 30, 30, 10, 10, 30, 30, 30, 30, 30,
-      30, 30, 30, 30, 30, 30, 30,  0, 30,  0,
-       5,  0, 30, 15,  5,  5,  0,  0, 30, 30,
-      30, 30, 30, 30, 30, 30,  0, 30, 30, 30,
-      30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
+      30, 30, 30, 30, 30,  5, 30, 10,  5,  0,
+      30, 30,  5,  5, 20, 30,  5, 30,  5,  5,
+       5, 30,  0, 10,  0,  5, 30, 30,  5, 30,
+      15, 30, 30, 30, 30, 30, 30,  5, 30, 10,
+       5,  0, 30, 30,  5,  5, 20, 30,  5, 30,
+       5,  5,  5, 30,  0, 10,  0,  5, 30, 30,
+       5, 30, 15, 30, 30, 30, 30, 30, 30, 30,
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
@@ -104,7 +120,7 @@ Perfect_Hash::hash (const char *str, unsigned int len)
       30, 30, 30, 30, 30, 30, 30, 30, 30, 30,
       30, 30, 30, 30, 30, 30
     };
-  int hval = len;
+   int hval = len;
 
   switch (hval)
     {
@@ -115,71 +131,61 @@ Perfect_Hash::hash (const char *str, unsigned int len)
       case 4:
       case 3:
       case 2:
-      case 1:
-        hval += asso_values[(unsigned char)str[0]];
+        hval += asso_values[(unsigned char)str[1]];
         break;
     }
   return hval;
 }
 
 inline struct http_kvp *
-Perfect_Hash::in_word_set (const char *str, unsigned int len)
+http_keyword_map::in_word_set ( const char *str,  unsigned int len)
 {
+  enum
+    {
+      TOTAL_KEYWORDS = 18,
+      MIN_WORD_LENGTH = 3,
+      MAX_WORD_LENGTH = 10,
+      MIN_HASH_VALUE = 3,
+      MAX_HASH_VALUE = 29
+    };
+
   static struct http_kvp wordlist[] =
     {
       {""}, {""}, {""},
-#line 30 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"PUT", httparser::PUT},
-#line 27 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"POST", httparser::POST},
-#line 36 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"close", httparser::CLOSE},
+      {"GET", httparser::get},
+      {"HEAD", httparser::head},
+      {"TRACE", httparser::trace},
+      {"DELETE", httparser::del},
+      {"deflate", httparser::deflate},
+      {"PUT", httparser::put},
+      {"POST", httparser::post},
+      {"close", httparser::close},
       {""},
-#line 37 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"chunked", httparser::CHUNKED},
-#line 40 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"compress", httparser::COMPRESS},
-#line 43 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"text/json", httparser::JSON},
-#line 35 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"keep-alive", httparser::KEEP_ALIVE},
+      {"chunked", httparser::chunked},
+      {"compress", httparser::compress},
+      {"text/html", httparser::html},
+      {"keep-alive", httparser::keep_alive},
       {""},
-#line 41 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"deflate", httparser::DEFLATE},
-#line 26 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"GET", httparser::GET},
-#line 42 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"text/html", httparser::HTML},
-#line 32 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"TRACE", httparser::TRACE},
-#line 31 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"DELETE", httparser::DELETE},
-#line 28 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"OPTIONS", httparser::OPTIONS},
-#line 38 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"identity", httparser::IDENTITY},
-#line 39 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"gzip", httparser::GZIP},
-      {""}, {""}, {""}, {""},
-#line 29 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"HEAD", httparser::HEAD},
+      {"OPTIONS", httparser::options},
+      {"identity", httparser::identity},
+      {"gzip", httparser::gzip},
       {""}, {""},
-#line 33 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"CONNECT", httparser::CONNECT},
+      {"CONNECT", httparser::connect},
       {""},
-#line 34 "C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf"
-      {"EXTENSION", httparser::EXTENSION}
+      {"EXTENSION", httparser::extension},
+      {""}, {""}, {""}, {""},
+      {"text/json", httparser::json}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
     {
-      int key = hash (str, len);
+       int key = hash (str, len);
 
       if (key <= MAX_HASH_VALUE && key >= 0)
         {
           const char *s = wordlist[key].key;
 
-          if (*str == *s && !strcmp (str + 1, s + 1))
+          if ((((unsigned char)*str ^ (unsigned char)*s) & ~32) == 0 && !gperf_case_strcmp (str, s))
             return &wordlist[key];
         }
     }

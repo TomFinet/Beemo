@@ -25,15 +25,23 @@ int socket::listen(void)
     return ::listen(handle_, SOMAXCONN);
 }
 
-socket_t socket::accept(void) {
+socket_t socket::accept(void)
+{
     return ::accept(handle_, NULL, NULL);
 }
 
-socket_t socket::handle(void) {
+int socket::receive(char *const buf, int len, int flags)
+{
+    return ::recv(handle_, buf, len, flags);
+}
+
+socket_t socket::handle(void)
+{
     return handle_;
 }
 
-int socket::address(struct sockaddr *name, int *namelen) {
+int socket::address(struct sockaddr *name, int *namelen)
+{
     return ::getsockname(handle_, name, namelen);
 }
 

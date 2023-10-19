@@ -3,8 +3,6 @@
 #include <string>
 #include <vector>
 
-#include <httparser/http_keyword_map.h>
-
 namespace httparser {
 
 constexpr auto &connection_header = "Connection:";
@@ -12,13 +10,41 @@ constexpr auto &encoding_header = "Transfer-Encoding:";
 constexpr auto &host_header = "Host:";
 constexpr auto &content_type_header = "Content-Type:";
 
-/**
- * Refer to section 14.23 of RFC2616.
- */
+enum method_t {
+    get, post, options, head, put,
+    del, trace, connect, extension 
+};
+
+enum conn_t {
+    keep_alive, close 
+};
+
+enum encoding_t {
+    chunked, identity, gzip, compress, deflate 
+};
+
+enum content_type_t {
+    html, json
+};
+
+/* RFC 9112 sect 2.3 */
+struct version_t {
+    short major;
+    short minor;
+};
+
+/* RFC 9112 sect 14.23 */
 struct host_t {
     std::string host;
     int port;
 };
+
+struct absolute_uri {
+    std::string scheme;
+    std::vector<std::string> segments;
+};
+
+const int no_port = -1;
 
 /**
  * Refer to section 5 of RFC2616.
@@ -38,7 +64,7 @@ struct http_req {
         /**
          * The http version.
          */
-        std::string version;
+        version_t version;
 
         /**
          * Optional connection setting. For example, the "close" option

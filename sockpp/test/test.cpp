@@ -15,12 +15,7 @@ int main() {
 
     sockpp::acceptor acc;
 
-    struct sockaddr_in local;
-    local.sin_family = AF_INET;
-    inet_pton(AF_INET, "127.0.0.1", &local.sin_addr.s_addr);
-    local.sin_port = htons(9843);
-
-    if (acc.open(&local) != 0) {
+    if (acc.open("127.0.0.1", 9483) != 0) {
         std::cout << "Failed to open the acceptor..." << std::endl;
         return 1;
     }
@@ -28,13 +23,15 @@ int main() {
     char buf[BUF_SIZE];
 
     while (true) {
-        sockpp::socket_t client_sock = acc.accept();
-        if (client_sock == INVALID_SOCKET) {
+        sockpp::socket_t client_handle = acc.accept();
+        sockpp::socket client_sock(client_handle);
+
+        if (client_handle == INVALID_SOCKET) {
             std::cout << "Failed to accept connection, trying again." << std::endl;
             continue;
         }
 
-        int res = recv(client_sock, buf, BUF_SIZE, 0);
+        int res = (client_sock, buf, BUF_SIZE, 0);
         if (res == 0) {
             std::cout << "Closing the connection..." << std::endl;
             break;

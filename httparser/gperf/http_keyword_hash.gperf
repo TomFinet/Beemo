@@ -1,43 +1,25 @@
-%{
-namespace httparser {
-    enum method_t {
-        GET, POST, OPTIONS, HEAD, PUT,
-        DELETE, TRACE, CONNECT, EXTENSION
-    };
-
-    enum conn_t {
-        KEEP_ALIVE, CLOSE
-    };
-
-    enum encoding_t {
-        CHUNKED, IDENTITY, GZIP, COMPRESS, DEFLATE
-    };
-
-    enum content_type_t {
-        HTML, JSON
-    };
-}
+%{#include <httparser/http_req.h>
 %}
 struct http_kvp {
     const char* key;
     int value;
 };
 %%
-GET, httparser::GET
-POST, httparser::POST
-OPTIONS, httparser::OPTIONS
-HEAD, httparser::HEAD
-PUT, httparser::PUT
-DELETE, httparser::DELETE
-TRACE, httparser::TRACE
-CONNECT, httparser::CONNECT
-EXTENSION, httparser::EXTENSION
-keep-alive, httparser::KEEP_ALIVE
-close, httparser::CLOSE
-chunked, httparser::CHUNKED
-identity, httparser::IDENTITY
-gzip, httparser::GZIP
-compress, httparser::COMPRESS
-deflate, httparser::DEFLATE
-text/html, httparser::HTML
-text/json, httparser::JSON
+GET, httparser::get
+POST, httparser::post
+OPTIONS, httparser::options
+HEAD, httparser::head
+PUT, httparser::put
+DELETE, httparser::delete
+TRACE, httparser::trace
+CONNECT, httparser::connect
+EXTENSION, httparser::extension
+keep-alive, httparser::keep_alive
+close, httparser::close
+chunked, httparser::chunked
+identity, httparser::identity
+gzip, httparser::gzip
+compress, httparser::compress
+deflate, httparser::deflate
+text/html, httparser::html
+text/json, httparser::json

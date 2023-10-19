@@ -12,10 +12,12 @@ include_directories(${CMAKE_SOURCE_DIR}/include/)
 
 set(SRCS
     src/http_parser.cpp
+    src/main.cpp
 )
 
-add_library(httparser STATIC ${SRCS})
-target_link_libraries(httparser)
+add_executable(httparser_main ${SRCS})
+
+add_library(httparser STATIC src/http_parser.cpp)
 
 
 include(FetchContent)

@@ -19,5 +19,8 @@ set(SRCS
     test/test.cpp
 )
 
-add_executable(sockpp ${SRCS})
+add_library(sockpp STATIC ${SRCS})
 target_link_libraries(sockpp wsock32 ws2_32)
+
+add_executable(sockpptest ${SRCS})
+target_link_libraries(sockpptest wsock32 ws2_32)

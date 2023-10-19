@@ -1,6 +1,8 @@
 #pragma once
 
-#include "socket.h"
+#include <string>
+
+#include <sockpp/socket.h>
 
 namespace sockpp {
 
@@ -18,10 +20,8 @@ class acceptor {
         /**
          * Creates the acceptor's socket handle, binds @addr to it, and
          * changes the socket's state to listening.
-         *
-         * @param addr Pointer to the local address to bind to.
          */
-        int open(struct sockaddr_in *addr);
+        int open(const std::string ip, const int host);
 
         /**
          * Accepts incoming connections for an open socket.

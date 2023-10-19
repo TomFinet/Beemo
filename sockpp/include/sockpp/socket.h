@@ -64,6 +64,8 @@ public:
      */
     socket_t accept(void);
 
+    int receive(char *const buf, int len, int flags);
+
     socket_t handle(void);
 
     int address(struct sockaddr *name, int *namelen);

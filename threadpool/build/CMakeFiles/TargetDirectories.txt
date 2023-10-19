@@ -1,0 +1,3 @@
+C:/Workspace/Tom Finet/Main/Source/httcpp/threadpool/build/CMakeFiles/threadpool.dir
+C:/Workspace/Tom Finet/Main/Source/httcpp/threadpool/build/CMakeFiles/ALL_BUILD.dir
+C:/Workspace/Tom Finet/Main/Source/httcpp/threadpool/build/CMakeFiles/ZERO_CHECK.dir

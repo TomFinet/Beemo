@@ -10,20 +10,28 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 set(HTTPARSER_PATH ${CMAKE_SOURCE_DIR}/../httparser)
 set(SOCKPP_PATH ${CMAKE_SOURCE_DIR}/../sockpp)
+set(THREADPOOL_PATH ${CMAKE_SOURCE_DIR}/../threadpool)
+
+message(${HTTPARSER_PATH})
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include/
     ${HTTPARSER_PATH}/include/
     ${SOCKPP_PATH}/include/
+    ${THREADPOOL_PATH}/include/
 )
 
 set(SRCS
+    src/req_handler.cpp
     src/main.cpp
 )
 
-add_executable(httpserver $SRCS)
+add_executable(httpserver ${SRCS})
 target_link_libraries(
     httpserver 
-    ${HTTPARSER_PATH}/build/lib/httparser.lib
-    ${SOCKPP_PATH}/build/lib/sockpp.lib
+    wsock32
+    ws2_32
+    "${HTTPARSER_PATH}/build/lib/Debug/httparser.lib"
+    "${SOCKPP_PATH}/build/lib/Debug/sockpp.lib"
+    "${THREADPOOL_PATH}/build/lib/Debug/threadpool.lib"
 )

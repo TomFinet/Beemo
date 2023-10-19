@@ -1,10 +1,15 @@
+#include <string>
+
 #include <sockpp/socket.h>
 #include <sockpp/acceptor.h>
 
-#include <httpserver/threadpool.h>
+#include <threadpool/pool.h>
 #include <httpserver/req_handler.h>
 
 const int ethernet_mtu = 1500;
+const char ip[] = "127.0.0.1";
+const int port = 9001;
+const int thread_num = 4;
 
 int main() {
 
@@ -14,34 +19,34 @@ int main() {
 
     sockpp::acceptor acc;
 
-    struct sockaddr_in local;
-    local.sin_family = AF_INET;
-    inet_pton(AF_INET, "127.0.0.1", &local.sin_addr.s_addr);
-    local.sin_port = htons(9843);
-
-    if (acc.open(&local) != 0) {
+    if (acc.open(ip, port) != 0) {
         return 1;
     }
 
-    httpserver::threadpool threadpool;
+    threadpool::pool threadpool(thread_num);
 
     char buf[ethernet_mtu];
 
     while (true) {
-        sockpp::socket_t client_sock = acc.accept();
-        if (client_sock == INVALID_SOCKET) {
+        sockpp::socket_t client_handle = acc.accept();
+        sockpp::socket client_sock(client_handle);
+
+        if (client_handle == INVALID_SOCKET) {
             continue;
         }
 
-        int res = recv(client_sock, buf, ethernet_mtu, 0);
+        int res = client_sock.receive(buf, ethernet_mtu, 0);
         if (res < 0) {
             sockpp::socket::cleanup();
             return 1;
         }
 
-        threadpool.submit();
+        std::string pkt(buf, res);
 
-        // TODO: dispatch packet to thread for handling 
-
+        threadpool.submit([](std::string pkt)
+        {
+            httpserver::req_handler handler;
+            handler.handle(pkt);
+        }, pkt);
     }
 }
