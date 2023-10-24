@@ -3,7 +3,9 @@
 #include <string>
 #include <vector>
 
-namespace httparser {
+#include <uriparser/uri.h>
+
+namespace http {
 
 constexpr auto &connection_header = "Connection:";
 constexpr auto &encoding_header = "Transfer-Encoding:";
@@ -33,24 +35,9 @@ struct version_t {
     short minor;
 };
 
-/* RFC 9112 sect 14.23 */
-struct host_t {
-    std::string host;
-    int port;
-};
-
-struct absolute_uri {
-    std::string scheme;
-    std::vector<std::string> segments;
-};
-
 const int no_port = -1;
 
-/**
- * Refer to section 5 of RFC2616.
- * 
- * Assumes that accept req header is JSON.
- */
+
 struct http_req {
 
         method_t method;
@@ -59,7 +46,7 @@ struct http_req {
          * May be an absolute uri, absolute path, authority,
          * or "*" meaning the request is not resource specific.
          */
-        std::string uri;   
+        uri::uri uri;   
 
         /**
          * The http version.
@@ -82,14 +69,6 @@ struct http_req {
          * Server is free to ignore these upgrades.
          */
         std::vector<std::string> upgrades; 
-
-        /**
-         * Naming authority of the origin server.
-         * Allows the origin server to differentiate between
-         * internally ambiguous URLs.
-         * Missing port information falls back to default.
-         */
-        host_t host;
 
         content_type_t content_type;
 

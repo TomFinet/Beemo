@@ -11,6 +11,7 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 set(HTTPARSER_PATH ${CMAKE_SOURCE_DIR}/../httparser)
 set(SOCKPP_PATH ${CMAKE_SOURCE_DIR}/../sockpp)
 set(THREADPOOL_PATH ${CMAKE_SOURCE_DIR}/../threadpool)
+set(URIPARSER_PATH ${CMAKE_SOURCE_DIR}/../uriparser)
 
 message(${HTTPARSER_PATH})
 
@@ -19,6 +20,7 @@ include_directories(
     ${HTTPARSER_PATH}/include/
     ${SOCKPP_PATH}/include/
     ${THREADPOOL_PATH}/include/
+    ${URIPARSER_PATH}/include/
 )
 
 set(SRCS
@@ -34,4 +36,5 @@ target_link_libraries(
     "${HTTPARSER_PATH}/build/lib/Debug/httparser.lib"
     "${SOCKPP_PATH}/build/lib/Debug/sockpp.lib"
     "${THREADPOOL_PATH}/build/lib/Debug/threadpool.lib"
+    "${URIPARSER_PATH}/build/lib/Debug/uriparser.lib"
 )

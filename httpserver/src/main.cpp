@@ -13,6 +13,8 @@ const int thread_num = 4;
 
 int main() {
 
+    /* TODO: encapsulate the socket and threadpool details into
+    an HTTP server class. */
     if (sockpp::socket::startup() != 0) {
         return 1;
     }

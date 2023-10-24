@@ -1,5 +1,5 @@
 /* C++ code produced by gperf version 3.0.1 */
-/* Command-line: 'C:\\Workspace\\Tom Finet\\Main\\Source\\httcpp\\httparser\\gperf\\gperf.exe' --language=C++ --struct-type --ignore-case -K key --includes --class-name=http_keyword_map --enum 'C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf'  */
+/* Command-line: 'C:\\Workspace\\Tom Finet\\Main\\Source\\httcpp\\http\\gperf\\gperf.exe' --language=C++ --struct-type --ignore-case -K key --includes --class-name=http_keyword_map --enum 'C:/Workspace/Tom Finet/Main/Source/httcpp/httparser/gperf/http_keyword_hash.gperf'  */
 /* Computed positions: -k'2,6' */
 
 #pragma once
@@ -152,29 +152,29 @@ http_keyword_map::in_word_set ( const char *str,  unsigned int len)
   static struct http_kvp wordlist[] =
     {
       {""}, {""}, {""},
-      {"GET", httparser::get},
-      {"HEAD", httparser::head},
-      {"TRACE", httparser::trace},
-      {"DELETE", httparser::del},
-      {"deflate", httparser::deflate},
-      {"PUT", httparser::put},
-      {"POST", httparser::post},
-      {"close", httparser::close},
+      {"GET", http::get},
+      {"HEAD", http::head},
+      {"TRACE", http::trace},
+      {"DELETE", http::del},
+      {"deflate", http::deflate},
+      {"PUT", http::put},
+      {"POST", http::post},
+      {"close", http::close},
       {""},
-      {"chunked", httparser::chunked},
-      {"compress", httparser::compress},
-      {"text/html", httparser::html},
-      {"keep-alive", httparser::keep_alive},
+      {"chunked", http::chunked},
+      {"compress", http::compress},
+      {"text/html", http::html},
+      {"keep-alive", http::keep_alive},
       {""},
-      {"OPTIONS", httparser::options},
-      {"identity", httparser::identity},
-      {"gzip", httparser::gzip},
+      {"OPTIONS", http::options},
+      {"identity", http::identity},
+      {"gzip", http::gzip},
       {""}, {""},
-      {"CONNECT", httparser::connect},
+      {"CONNECT", http::connect},
       {""},
-      {"EXTENSION", httparser::extension},
+      {"EXTENSION", http::extension},
       {""}, {""}, {""}, {""},
-      {"text/json", httparser::json}
+      {"text/json", http::json}
     };
 
   if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)
