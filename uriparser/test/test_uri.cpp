@@ -37,31 +37,19 @@ TEST(UriTest, Host)
     host = "[v4.fff:fff:df]";
     uri.parse_host(host.begin(), host.end());
     ASSERT_EQ(uri.future_version, "4");
-    ASSERT_EQ(uri.ip, "fff:fff:df");
-}
+    ASSERT_EQ(uri.ipvfuture, "fff:fff:df");
 
-TEST(UriTest, IPvFuture)
-{
-    uri::uri uri;
-    std::string ipvfuture;
-
-    ipvfuture = "vff.d3:232";
-    uri.parse_ipvfuture(ipvfuture.begin(), ipvfuture.end());
-    ASSERT_EQ(uri.ip, "d3:232");
+    host = "[vff.d3:232]";
+    uri.parse_host(host.begin(), host.end());
+    ASSERT_EQ(uri.ipvfuture, "d3:232");
     ASSERT_EQ(uri.future_version, "ff");
 
-    ipvfuture = "vfz.d3:232";
-    ASSERT_THROW(uri.parse_ipvfuture(ipvfuture.begin(), ipvfuture.end()), uri::uri_error);
-}
+    host = "127.0.0.1";
+    uri.parse_host(host.begin(), host.end());
+    ASSERT_EQ(uri.ipv4, "127.0.0.1");
 
-TEST(UriTest, RegName)
-{
-    uri::uri uri;
-    std::string regname;
-
-    regname = "valid";
-    uri.parse_reg_name(regname.begin(), regname.end());
-    ASSERT_EQ(uri.reg_name, regname);
+    host = "[vfz.d3:232]";
+    ASSERT_THROW(uri.parse_host(host.begin(), host.end()), uri::uri_error);
 }
 
 TEST(UriTest, Port)
@@ -81,75 +69,33 @@ TEST(UriTest, Port)
     ASSERT_THROW(uri.parse_port(port.begin(), port.end()), uri::uri_error);
 }
 
-TEST(UriTest, PathAbEmpty)
+TEST(UriTest, Path)
 {
     uri::uri uri;
     std::string path;
 
     path = "";
-    uri.parse_path_abempty(path.begin(), path.end());
+    uri.parse_path(path.begin(), path.end());
     ASSERT_EQ(uri.path, path);
 
+    path = "/";
+    uri.parse_path(path.begin(), path.end());
+    ASSERT_EQ(uri.path, path);
+    
     path = "/dsfds/gerog/dsfs"; 
-    uri.parse_path_abempty(path.begin(), path.end());
+    uri.parse_path(path.begin(), path.end());
     ASSERT_EQ(uri.path, path);
 
-    path = "dfds/dsf";
-    ASSERT_THROW(uri.parse_path_abempty(path.begin(), path.end()), uri::uri_error);
-}
+    path = "first:seg/dfs";
+    uri.parse_path(path.begin(), path.end());
+    ASSERT_EQ(uri.path, path);
 
-TEST(UriTest, PathNoScheme)
-{
-    uri::uri uri;
-    std::string noscheme;
+    path = "first:seg";
+    uri.parse_path(path.begin(), path.end());
+    ASSERT_EQ(uri.path, path);
 
-    noscheme = "firstseg/dfs";
-    uri.parse_path_noscheme(noscheme.begin(), noscheme.end());
-    ASSERT_EQ(uri.path, noscheme);
-
-    noscheme = "first@seg";
-    uri.parse_path_noscheme(noscheme.begin(), noscheme.end());
-    ASSERT_EQ(uri.path, noscheme);
-
-    noscheme = "scheme:invalid/fail";
-    ASSERT_THROW(uri.parse_path_noscheme(noscheme.begin(), noscheme.end()), uri::uri_error);
-}
-
-TEST(UriTest, PathRootless)
-{
-    uri::uri uri;
-    std::string rootless;
-
-    rootless = "first:seg/dfs";
-    uri.parse_path_rootless(rootless.begin(), rootless.end());
-    ASSERT_EQ(uri.path, rootless);
-
-    rootless = "first:seg";
-    uri.parse_path_rootless(rootless.begin(), rootless.end());
-    ASSERT_EQ(uri.path, rootless);
-
-    rootless = "/";
-    ASSERT_THROW(uri.parse_path_rootless(rootless.begin(), rootless.end()), uri::uri_error);
-}
-
-TEST(UriTest, PathAbsolute)
-{
-    uri::uri uri;
-    std::string abs;
-
-    abs = "/";
-    uri.parse_path_absolute(abs.begin(), abs.end());
-    ASSERT_EQ(uri.path, abs);
-
-    abs = "/d/a";
-    uri.parse_path_absolute(abs.begin(), abs.end());
-    ASSERT_EQ(uri.path, abs);
-
-    abs = "//a";
-    ASSERT_THROW(uri.parse_path_absolute(abs.begin(), abs.end()), uri::uri_error);
-
-    abs = "";
-    ASSERT_THROW(uri.parse_path_absolute(abs.begin(), abs.end()), uri::uri_error);
+    path = "//a";
+    ASSERT_THROW(uri.parse_path(path.begin(), path.end()), uri::uri_error);
 }
 
 TEST(UriTest, Query)

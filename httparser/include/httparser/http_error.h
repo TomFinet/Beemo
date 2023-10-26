@@ -5,10 +5,10 @@
 
 namespace http {
 
-class parse_error : public std::domain_error {
+class http_error : public std::domain_error {
 
     public:
-        parse_error(const std::string &err_msg) throw() : std::domain_error(err_msg) { }
+        http_error(const std::string &err_msg) throw() : std::domain_error(err_msg) { }
 
         const char* what() const throw()
         {

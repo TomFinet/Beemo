@@ -3,7 +3,7 @@
 
 #include <httpserver/req_handler.h>
 
-#include <httparser/parse_error.h>
+#include <httparser/http_error.h>
 #include <httparser/http_parser.h>
 #include <httparser/http_req.h>
 
@@ -18,16 +18,21 @@ void req_handler::handle(std::string &pkt)
     http::http_parser parser;
 
     try {
-        parser.parse(parser.lex(pkt));
 
         std::cout << pkt << std::endl << std::endl;
+
+        parser.parse(parser.lex(pkt));
 
         std::cout << "method: " << parser.req.method << std::endl;
         std::cout << "version: " << parser.req.version.major << "." << parser.req.version.minor << std::endl;
         std::cout << "reg_name: " << parser.req.uri.reg_name << std::endl; 
+        std::cout << "port: " << parser.req.uri.port << std::endl;
+        std::cout << "scheme: " << parser.req.uri.scheme << std::endl;
+        std::cout << "path: " << parser.req.uri.path << std::endl << std::endl;
 
+        /* TODO: look at semantics of http pkt. */
     }
-    catch (http::parse_error &parse_err) {
+    catch (http::http_error &parse_err) {
         print_error(parse_err);
     }
     catch (uri::uri_error &uri_err) {

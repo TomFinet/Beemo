@@ -4,14 +4,14 @@
 #include <thread>
 
 #include <httparser/http_parser.h>
-#include <httparser/parse_error.h>
+#include <httparser/http_error.h>
 
 #include <uriparser/uri_error.h>
 
 int main() {
 
     std::vector<http::line_t> get = {
-        {"GET", "http://www.google.com", "HTTP/1.1"},
+        {"GET", "/dsf/pa1h", "HTTP/1.1"},
         {"Connection:", "keep-alive"},
         {"Transfer-Encoding:", "chunked"},
         {"Host:", "www.google.com"},
@@ -24,9 +24,9 @@ int main() {
     try {
         parser.parse(get);
     }
-    catch (http::parse_error &parse_err) {
+    catch (http::http_error &http_err) {
         std::cout << "tid: " << std::this_thread::get_id()
-                  << " | " << parse_err.what() << std::endl;
+                  << " | " << http_err.what() << std::endl;
     }
     catch (uri::uri_error &uri_err) {
         std::cout << "tid: " << std::this_thread::get_id()

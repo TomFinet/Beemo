@@ -25,6 +25,7 @@ include_directories(
 
 set(SRCS
     src/req_handler.cpp
+    src/server.cpp
     src/main.cpp
 )
 

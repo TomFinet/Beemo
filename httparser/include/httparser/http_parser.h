@@ -6,7 +6,7 @@
 
 #include <httparser/http_keyword_map.h>
 #include <httparser/http_req.h>
-#include <httparser/parse_error.h>
+#include <httparser/http_error.h>
 
 #include <uriparser/uri.h>
 
@@ -17,7 +17,7 @@ typedef std::vector<token_t> line_t;
 
 enum target_form_t {
     absolute, authority, asterik, origin
-}
+};
 
 class http_parser {
 
@@ -74,13 +74,15 @@ class http_parser {
 
         const static inline int version_index_start = 5;
 
+        const static inline char default_scheme[] = "http";
+
         inline unsigned int keyword_val(const token_t &keyword, const std::string &err_msg)
         {
             struct http_kvp *kvp = http_keyword_map::in_word_set(keyword.c_str(),
                 static_cast<unsigned int>(keyword.length()));
 
             if (kvp == NULL) {
-                throw parse_error(err_msg);
+                throw http_error(err_msg);
             }
 
             return kvp->value;

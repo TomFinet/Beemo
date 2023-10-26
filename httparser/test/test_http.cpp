@@ -4,7 +4,7 @@
 #include <vector>
 #include <iostream>
 
-#include <httparser/parse_error.h>
+#include <httparser/http_error.h>
 #include <httparser/http_parser.h>
 #include <httparser/http_req.h>
 #include <httparser/http_keyword_map.h>
@@ -38,7 +38,7 @@ TEST(HttpTest, AsterikForm)
     parser.parse_asterik_form("*");
     ASSERT_TRUE(parser.req.uri.asterik);
 
-    ASSERT_THROW(parser.parse_asterik_form("*/"), http::parse_error);
+    ASSERT_THROW(parser.parse_asterik_form("*/"), http::http_error);
     ASSERT_FALSE(parser.req.uri.asterik);
 }
 
@@ -59,6 +59,12 @@ TEST(HttpTest, OriginForm)
 }
 
 TEST(HttpTest, AuthorityForm)
-{
-
+{  
+    http::http_parser parser;
+    std::string path;
+    
+    path = "www.google.com:8080/abs/pa1h?search=waffle";
+    parser.parse_authority_form(path);
+    ASSERT_EQ(parser.req.uri.reg_name, "www.google.com");
+    ASSERT_EQ(parser.req.uri.port, 8080);
 }

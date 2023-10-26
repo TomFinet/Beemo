@@ -42,7 +42,7 @@ std::vector<line_t> http_parser::lex(std::string &raw_req)
 void http_parser::parse(const std::vector<line_t> &lines)
 {
     if (lines.empty()) {
-        throw parse_error("Request is empty.");
+        throw http_error("Request is empty.");
     }
 
     parse_req_line(lines[0]);
@@ -55,7 +55,7 @@ void http_parser::parse(const std::vector<line_t> &lines)
 void http_parser::parse_req_line(const line_t &req_line)
 {
     if (req_line.size() != req_line_token_num) {
-        throw parse_error("Request line does not have the correct number of tokens.");
+        throw http_error("Request line does not have the correct number of tokens.");
     }
 
     parse_method(req_line[0]);
@@ -65,22 +65,25 @@ void http_parser::parse_req_line(const line_t &req_line)
 
 void http_parser::parse_method(const token_t &method_val)
 {
-    req.method = static_cast<method_t>(keyword_val(method_val, "Unknown http_parser method."));
+    req.method = static_cast<method_t>(keyword_val(method_val, "Unsupported HTTP method."));
 }
 
 void http_parser::parse_req_target(const token_t &req_target)
 {
     if (req_target.at(0) == '*') {
+        target_form = http::asterik;
         parse_asterik_form(req_target);
     }
     else if (req_target.at(0) == '/') {
+        target_form = http::origin;
         parse_origin_form(req_target);
     }
     else if (req_target.find('/') != std::string::npos) {
-        target_form = http::absolute; /* the req_target is the uri */
+        target_form = http::absolute;
         parse_absolute_form(req_target);
     }
     else {
+        target_form = http::authority;
         parse_authority_form(req_target);
     }
 }
@@ -89,40 +92,24 @@ void http_parser::parse_asterik_form(const token_t &req_target)
 {
     if (req_target.length() > 1 || req_target.at(0) != '*') {
         req.uri.asterik = false;
-        throw parse_error("Invalid request target.");
+        throw http_error("Invalid request target.");
     }
     req.uri.asterik = true; 
 }
 
-/* absolute-path [ "?" query ]*/
 void http_parser::parse_origin_form(const token_t &req_target)
 {
-    size_t query_start_pos = req_target.find('?');
-    if (query_start_pos == std::string::npos) {
-        req.uri.parse_path_absolute(req_target.begin(), req_target.end());
-        req.uri.query = "";
-    }
-    else {
-        req.uri.parse_path_absolute(req_target.begin(), req_target.begin() + query_start_pos);
-        req.uri.parse_query(req_target.begin() + query_start_pos, req_target.end());
-    }
+    req.uri.parse_uri(req_target, uri::flag_path | uri::flag_query);
 }
 
 void http_parser::parse_absolute_form(const token_t &req_target)
 {
-    req.uri.parse_absolute_uri(req_target);
+    req.uri.parse_uri(req_target, uri::flag_all);
 }
 
 void http_parser::parse_authority_form(const token_t &req_target)
 {
-    size_t host_end_pos = req_target.find(':');
-    if (host_end_pos == std::string::npos) {
-        req.uri.parse_host(req_target.begin(), req_target.end());
-    }
-    else {
-        req.uri.parse_host(req_target.begin(), req_target.begin() + host_end_pos);
-        req.uri.parse_port(req_target.begin() + host_end_pos, req_target.end());
-    }
+    req.uri.parse_uri(req_target, uri::flag_authority);
 }
 
 void http_parser::parse_version(const token_t &version)
@@ -161,11 +148,21 @@ void http_parser::parse_header_host(const token_t &host_val)
 {
     switch (target_form) {
         case http::origin:
-        break;
+            /* req_target contains path and query. */
+            req.uri.parse_uri(host_val, uri::flag_scheme | uri::flag_authority);
+            break;
         case http::authority:
-        break;
+            /* req_target contains host and port. */
+            req.uri.parse_uri(host_val, ~uri::flag_authority);
+            break;
         case http::asterik:
-        break;
+            /* req_target contains */
+            req.uri.parse_uri(host_val, uri::flag_scheme | uri::flag_authority);
+            break;
+    }
+
+    if (req.uri.scheme == "") {
+        req.uri.scheme = default_scheme;
     }
 }
 
