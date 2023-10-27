@@ -5,12 +5,12 @@
 
 #include <threadpool/pool.h>
 
-#include <httpserver/req_handler.h>
+#include <httpserver/req_worker.h>
 
 namespace httpserver {
 
 const int ip_len = 15;
-const int buf_len = 1500;
+const int buf_len = 10000;
 
 /* Stores configurations for the http server. */
 class server {
@@ -19,6 +19,7 @@ class server {
 
         int max_conn;
         int max_backlog;
+        int timeout_ms;
 
         int thread_num;
 
@@ -29,8 +30,8 @@ class server {
 
         sockpp::acceptor acc;
 
-        server(int max_conn, int max_backlog, int thread_num, int listening_port, char listening_ip[])
-            : max_conn(max_conn), max_backlog(max_backlog), thread_num(thread_num),
+        server(int max_conn, int max_backlog, int timeout_ms, int thread_num, int listening_port, const char listening_ip[ip_len])
+            : max_conn(max_conn), max_backlog(max_backlog), timeout_ms(timeout_ms), thread_num(thread_num),
               listening_port(listening_port), listening_ip(listening_ip) { }
 
         int start(); 

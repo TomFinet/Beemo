@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
-PROJECT(httparser CXX)
+PROJECT(http CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,15 +16,15 @@ include_directories(
 )
 
 set(SRCS
-    src/http_parser.cpp
+    src/msg.cpp
     src/main.cpp
 )
 
-add_executable(httparser_main ${SRCS})
-target_link_libraries(httparser_main ${URIPARSER}/build/lib/Debug/uriparser.lib)
+add_executable(http_main ${SRCS})
+target_link_libraries(http_main ${URIPARSER}/build/lib/Debug/uriparser.lib)
 
-add_library(httparser STATIC src/http_parser.cpp)
-target_link_libraries(httparser ${URIPARSER}/build/lib/Debug/uriparser.lib)
+add_library(http STATIC src/msg.cpp)
+target_link_libraries(http ${URIPARSER}/build/lib/Debug/uriparser.lib)
 
 
 include(FetchContent)
@@ -39,8 +39,8 @@ FetchContent_MakeAvailable(googletest)
 
 enable_testing()
 
-add_executable(httparser_tests test/test_lexer.cpp test/test_http.cpp)
-target_link_libraries(httparser_tests GTest::gtest_main ${LIBRARY_OUTPUT_PATH}/Debug/httparser.lib ${URIPARSER}/build/lib/Debug/uriparser.lib)
+add_executable(http_tests test/test_lexer.cpp test/test_http.cpp)
+target_link_libraries(http_tests GTest::gtest_main ${LIBRARY_OUTPUT_PATH}/Debug/http.lib ${URIPARSER}/build/lib/Debug/uriparser.lib)
 
 include(GoogleTest)
-gtest_discover_tests(httparser_tests)
+gtest_discover_tests(http_tests)

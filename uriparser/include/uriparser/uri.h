@@ -5,6 +5,7 @@
 namespace uri {
 
 const int no_port = -1;
+const std::string no_scheme = "";
 
 const int flag_scheme = 1;
 const int flag_authority = 2;

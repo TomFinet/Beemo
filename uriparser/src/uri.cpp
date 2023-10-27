@@ -16,6 +16,9 @@ void uri::parse_uri(const std::string &uri_str, int flags)
         if (scheme_end != std::string::npos) {
             parse_scheme(uri_str.begin(), uri_str.begin() + scheme_end);
         }
+        else {
+            scheme = no_scheme;
+        }
     }
 
     if (auth_start_pos == std::string::npos) {
@@ -97,6 +100,7 @@ void uri::parse_authority(std::string::const_iterator auth_start,
 
     if (port_start == std::string::npos) {
         parse_host(auth_str.begin() + host_start, auth_str.end());
+        req.uri.port = no_port;
     }
     else {
         parse_host(auth_str.begin() + host_start, auth_str.begin() + port_start);
@@ -250,7 +254,7 @@ std::string uri::parse_pattern(std::string::const_iterator pattern_start,
             throw uri_error("Unexpected character.");
         }
 
-        pattern_str.push_back(*iter);
+        pattern_str.push_back(std::tolower(*iter));
     }
 
     return pattern_str;

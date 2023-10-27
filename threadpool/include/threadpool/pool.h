@@ -13,9 +13,6 @@
 
 namespace threadpool {
 
-/**
- * A threadpool where all submitted resources are handled homogenously.
- */
 class pool {
 
     public:
@@ -24,7 +21,7 @@ class pool {
             - threads are created
             - threads wait for queued requests
         */
-        pool(size_t thread_num);
+        pool(size_t thread_num, unsigned int timeout_ms);
 
         /* Waits for all threads to finish and joins them. */
         ~pool();
@@ -53,6 +50,8 @@ class pool {
     private:
 
         size_t thread_num;
+        unsigned int timeout_ms;
+
         std::vector<std::thread> workers;
         std::queue<std::function<void()>> jobs;
         std::mutex job_mutex;

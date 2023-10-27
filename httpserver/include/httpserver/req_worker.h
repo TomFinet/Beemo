@@ -6,16 +6,18 @@
 
 namespace httpserver {
 
-class req_handler {
+class req_worker {
 
     public:
 
-        req_handler() {}
-        ~req_handler() {}
+        req_worker() {}
+        ~req_worker() {}
 
-        void handle(std::string &pkt);
-    
+        void work(std::string &pkt);
+
     private:
+
+        void validate(const struct http_req &req);
 
         inline void print_error(const std::exception &ex)
         {

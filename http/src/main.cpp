@@ -3,8 +3,8 @@
 #include <stdexcept>
 #include <thread>
 
-#include <httparser/http_parser.h>
-#include <httparser/http_error.h>
+#include <http/msg.h>
+#include <http/error.h>
 
 #include <uriparser/uri_error.h>
 
@@ -18,15 +18,13 @@ int main() {
         {"Test", "body..."}
     };
 
-    http::http_parser parser;
-    http::http_req req;
-
     try {
-        parser.parse(get);
+        http::req req;
+        req.parse(get);
     }
-    catch (http::http_error &http_err) {
+    catch (http::error &err) {
         std::cout << "tid: " << std::this_thread::get_id()
-                  << " | " << http_err.what() << std::endl;
+                  << " | " << err.what() << std::endl;
     }
     catch (uri::uri_error &uri_err) {
         std::cout << "tid: " << std::this_thread::get_id()

@@ -12,7 +12,7 @@ int server::start() {
         return 1;
     }
 
-    threadpool::pool threadpool(thread_num);
+    threadpool::pool threadpool(thread_num, timeout_ms);
 
     while (true) {
         sockpp::socket_t client_handle = acc.accept();
@@ -32,8 +32,8 @@ int server::start() {
 
         threadpool.submit([](std::string pkt)
         {
-            httpserver::req_handler handler;
-            handler.handle(pkt);
+            httpserver::req_worker worker;
+            worker.work(pkt);
         }, pkt);
     }
 }

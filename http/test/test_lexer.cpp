@@ -4,9 +4,8 @@
 #include <vector>
 #include <iostream>
 
-#include <httparser/http_parser.h>
-#include <httparser/http_req.h>
-#include <httparser/http_keyword_map.h>
+#include <http/msg.h>
+#include <http/msg_constants.h>
 
 TEST(LexerTest, Lex_Get_Valid)
 {
@@ -16,8 +15,8 @@ TEST(LexerTest, Lex_Get_Valid)
         "\r"
         "Test body...   ";
 
-    http::http_parser parser;
-    std::vector<http::line_t> headers = parser.lex(get);
+    http::req req;
+    std::vector<http::line_t> headers = req.lex(get);
 
     ASSERT_EQ(headers.size(), 3);
     ASSERT_EQ(headers[0].size(), 3);

@@ -8,7 +8,7 @@ set(CMAKE_BINARY_DIR ${CMAKE_SOURCE_DIR}/build)
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_BINARY_DIR}/bin)
 set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
-set(HTTPARSER_PATH ${CMAKE_SOURCE_DIR}/../httparser)
+set(HTTPARSER_PATH ${CMAKE_SOURCE_DIR}/../http)
 set(SOCKPP_PATH ${CMAKE_SOURCE_DIR}/../sockpp)
 set(THREADPOOL_PATH ${CMAKE_SOURCE_DIR}/../threadpool)
 set(URIPARSER_PATH ${CMAKE_SOURCE_DIR}/../uriparser)
@@ -24,7 +24,7 @@ include_directories(
 )
 
 set(SRCS
-    src/req_handler.cpp
+    src/req_worker.cpp
     src/server.cpp
     src/main.cpp
 )
