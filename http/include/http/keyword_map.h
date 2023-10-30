@@ -31,7 +31,7 @@
 #error "gperf generated tables don't work with this execution character set. Please report a bug to <bug-gnu-gperf@gnu.org>."
 #endif
 
-#include <http/msg_constants.h>
+#include <http/msg.h>
 struct http_kvp {
     const char* key;
     int value;

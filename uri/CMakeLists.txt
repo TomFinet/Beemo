@@ -1,5 +1,5 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 3.10)
-PROJECT(uriparser CXX)
+PROJECT(uri CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -16,7 +16,7 @@ set(SRCS
     src/uri.cpp
 )
 
-add_library(uriparser STATIC ${SRCS})
+add_library(uri STATIC ${SRCS})
 
 add_executable(urimain ${SRCS} src/main.cpp)
 
@@ -34,7 +34,7 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 add_executable(uri_tests test/test_uri.cpp)
-target_link_libraries(uri_tests GTest::gtest_main ${LIBRARY_OUTPUT_PATH}/Debug/uriparser.lib)
+target_link_libraries(uri_tests GTest::gtest_main ${LIBRARY_OUTPUT_PATH}/Debug/uri.lib)
 
 include(GoogleTest)
 gtest_discover_tests(uri_tests)

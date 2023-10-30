@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 
 namespace uri {
 
@@ -32,7 +33,7 @@ class uri {
         uri() { }
         ~uri() { }
 
-        void parse_uri(const std::string &uri_str, int flags);
+        void parse_uri(std::string_view uri_str, int flags);
 
 
         void parse_scheme(std::string::const_iterator scheme_start,

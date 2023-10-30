@@ -2,8 +2,8 @@
 #include <iostream>
 #include <stdexcept>
 
-#include <uriparser/uri.h>
-#include <uriparser/uri_error.h>
+#include <uri/uri.h>
+#include <uri/uri_error.h>
 
 int main()
 {

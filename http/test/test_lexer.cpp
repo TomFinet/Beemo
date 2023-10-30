@@ -5,7 +5,7 @@
 #include <iostream>
 
 #include <http/msg.h>
-#include <http/msg_constants.h>
+#include <http/req_parser.h>
 
 TEST(LexerTest, Lex_Get_Valid)
 {
@@ -16,7 +16,8 @@ TEST(LexerTest, Lex_Get_Valid)
         "Test body...   ";
 
     http::req req;
-    std::vector<http::line_t> headers = req.lex(get);
+    http::req_parser parser(&req);
+    std::vector<http::line_t> headers = parser.lex(get);
 
     ASSERT_EQ(headers.size(), 3);
     ASSERT_EQ(headers[0].size(), 3);

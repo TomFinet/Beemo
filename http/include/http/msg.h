@@ -1,112 +1,107 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include <unordered_map>
-#include <stdexcept>
 
-#include <http/msg_constants.h>
-#include <http/keyword_map.h>
-#include <http/msg.h>
-#include <http/error.h>
-
-#include <uriparser/uri.h>
+#include <uri/uri.h>
 
 namespace http {
 
-class msg {
-    public:
-        version_t version;
-        std::unordered_map<std::string, int> field_map;
-        std::string body;
-};
+    /* RFC 9112 sect 2.3 */
+    struct version {
+        short major;
+        short minor;
+    };
 
-class req : public msg {
+    enum method_t {
+        get, post, options, head, put,
+        del, trace, connect, extension 
+    };
 
-    public:
+    enum conn_t {
+        keep_alive, close 
+    };
 
-        req() { }
-        req(std::string &raw) { parse(lex(raw)); }
-        ~req() { }
+    enum encoding_t {
+        chunked, identity, gzip, compress, deflate 
+    };
 
-        method_t method;
+    enum content_type_t {
+        html, json
+    };
 
+    enum target_form_t {
+        absolute, authority, asterik, origin
+    };
+
+    enum status_t {
+        unparsed, headers, completed
+    };
+
+    constexpr auto &connection_header = "connection";
+    constexpr auto &encoding_header = "transfer-encoding";
+    constexpr auto &host_header = "host";
+    constexpr auto &content_type_header = "content-type";
+
+    constexpr auto &ok = "200";
+    constexpr auto &created = "201";
+    constexpr auto &accepted = "202";
+    constexpr auto &no_content = "204";
+
+    constexpr auto &multi_choices = "300";
+    constexpr auto &moved_permanently = "301";
+    constexpr auto &found = "302";
+
+    constexpr auto &bad_req = "400";
+    constexpr auto &unauthorised = "401";
+    constexpr auto &forbidden = "403";
+    constexpr auto &not_found = "404";
+    constexpr auto &req_timeout = "408";
+    constexpr auto &unsupported_media_type = "415";
+    constexpr auto &upgrade_required = "426";
+
+    constexpr auto &internal_err = "500";
+    constexpr auto &not_implemented = "501";
+    constexpr auto &bad_gateway = "502";
+    constexpr auto &service_unavailable = "503";
+
+    struct req {
+
+        /* metadata */
         target_form_t target_form;
-        uri::uri uri;   
-        
-        encoding_t encoding;
-        content_type_t content_type;
+        status_t status;
+        bool valid = true;
 
-        /**
-         * List of client supported protocols it would like to switch to.
-         * Server is free to ignore these upgrades.
-         */
-        std::vector<std::string> upgrades; 
-        
-        std::vector<line_t> lex(std::string &raw_req);
+        /* request line */
+        struct version version;
+        method_t method;
+        uri::uri uri;
 
-        /**
-         * Parses a tokenised request into an @http_req object.
-         * according to RFC 9112 sect 2.1.
-         *
-         * @param req_lines Tokenised request lines. 
-         * @param req the parsed HTTP request object.
-         */
-        void parse(const std::vector<line_t> &lines);
+        /* fields */
+        std::unordered_map<std::string, std::string> fields;
 
-        /* RFC 9112 sect status_code_len */
-        void parse_req_line(const line_t &req_line);
+        /* body */
+        std::string body;
 
-        /* RFC 9112 sect status_code_len.1 */
-        void parse_method(const token_t &method_val);
+        void print(void) const;
+    };
 
-        /* RFC 9112 sect status_code_len.2 */
-        void parse_req_target(const token_t &req_target);
-        void parse_asterik_form(const token_t &req_target);
-        void parse_origin_form(const token_t &req_target);
-        void parse_absolute_form(const token_t &req_target);
-        void parse_authority_form(const token_t &req_target);
+    constexpr int status_code_len = 4;
 
-        /* RFC 9112 sect 2.status_code_len */
-        void parse_version(const token_t &version);
-        
-        /* RFC 9112 sect status_code_len.0 */
-        void parse_field_line(const line_t &field);
+    class response {
 
-        void parse_header_host(const token_t &host_val);
+        /* metadata */
 
-        void parse_body(const line_t &body_line);
+        /* status line */
+        struct version version;
+        char status_code[status_code_len];
+        std::string reason; 
 
-        void validate(void);
+        /* fields */
+        std::unordered_map<std::string, std::string> fields;
 
-    private:
-
-        const static inline int req_line_token_num = 3;
-        const static inline int version_index_start = 5;
-
-        const static inline char default_scheme[] = "http";
-        const static inline int default_port = 80;
-
-        inline unsigned int keyword_val(const token_t &keyword, const std::string &err_msg)
-        {
-            struct http_kvp *kvp = http_keyword_map::in_word_set(keyword.c_str(),
-                static_cast<unsigned int>(keyword.length()));
-
-            if (kvp == NULL) {
-                throw error(err_msg);
-            }
-
-            return kvp->value;
-        }
-
-        template<typename T>
-        static void push_and_clear(std::vector<T> &v, T &t);
-
-};
-
-class response : public msg {
-    char status_code[status_code_len];
-    char *reason; 
-};
+        /* body */
+        std::string body;
+    };
 
 }

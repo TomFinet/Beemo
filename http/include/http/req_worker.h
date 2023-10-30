@@ -4,7 +4,7 @@
 #include <iostream>
 #include <thread>
 
-namespace httpserver {
+namespace http {
 
 class req_worker {
 

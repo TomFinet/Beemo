@@ -1,5 +1,5 @@
-#include <uriparser/uri.h>
-#include <uriparser/uri_error.h>
+#include <uri/uri.h>
+#include <uri/uri_error.h>
 
 #include <iostream>
 
@@ -100,7 +100,7 @@ void uri::parse_authority(std::string::const_iterator auth_start,
 
     if (port_start == std::string::npos) {
         parse_host(auth_str.begin() + host_start, auth_str.end());
-        req.uri.port = no_port;
+        port = no_port;
     }
     else {
         parse_host(auth_str.begin() + host_start, auth_str.begin() + port_start);
