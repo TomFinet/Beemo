@@ -1,48 +1,68 @@
 #include <sockpp/socket.h>
 
+
 namespace sockpp {
 
-socket::~socket()
-{
-    if (handle_ != INVALID_SOCKET) {
-        closesocket(handle_);
+    socket::~socket()
+    {
+        if (handle_ != INVALID_SOCKET) {
+            closesocket(handle_);
+        }
     }
-}
 
-socket_t socket::create_handle(int family, int type, int protocol)
-{
-    handle_ = ::socket(family, type, protocol); 
-    return handle_;
-}
+    void socket::create_handle(int family, int type, int protocol)
+    {
+        handle_ = ::socket(family, type, protocol); 
+        if (handle_ == INVALID_SOCKET) {
+            throw std::runtime_error("Failed to create the socket.");
+        }
+    }
 
-int socket::bind(struct sockaddr *addr, int nbytes)
-{
-    return ::bind(handle_, addr, nbytes);
-}
+    void socket::bind(struct sockaddr *addr, int nbytes)
+    {
+        int err = ::bind(handle_, addr, nbytes);
+        if (err == SOCKET_ERROR) {
+            throw std::runtime_error("Failed to bind an address to the socket handle.");
+        }
+    }
 
-int socket::listen(void)
-{
-    return ::listen(handle_, SOMAXCONN);
-}
+    void socket::listen(void)
+    {
+        int err = ::listen(handle_, SOMAXCONN);
+        if (err == SOCKET_ERROR) {
+            throw std::runtime_error("Failed to transition socket into a listening state.");
+        }
+    }
 
-socket_t socket::accept(void)
-{
-    return ::accept(handle_, NULL, NULL);
-}
+    socket_t socket::accept(void)
+    {
+        socket_t conn_handle = ::accept(handle_, NULL, NULL);
+        if (conn_handle == INVALID_SOCKET) {
+            throw std::runtime_error("Failed to accept an incoming connection.");
+        }
+        return conn_handle;
+    }
 
-int socket::receive(char *const buf, int len, int flags)
-{
-    return ::recv(handle_, buf, len, flags);
-}
+    int socket::receive(char *const buf, int len, int flags)
+    {
+        int nbytes = ::recv(handle_, buf, len, flags);
+        if (nbytes == SOCKET_ERROR) {
+            throw std::runtime_error("Failed to receive the incoming data.");
+        }
+        return nbytes;
+    }
 
-socket_t socket::handle(void)
-{
-    return handle_;
-}
+    socket_t socket::handle(void)
+    {
+        return handle_;
+    }
 
-int socket::address(struct sockaddr *name, int *namelen)
-{
-    return ::getsockname(handle_, name, namelen);
-}
+    void socket::address(struct sockaddr *name, int *namelen)
+    {
+        int err = ::getsockname(handle_, name, namelen);
+        if (err == SOCKET_ERROR) {
+            throw std::runtime_error("Failed to get the socket address.");
+        }
+    }
 
 }

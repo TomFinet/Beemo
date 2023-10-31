@@ -3,11 +3,8 @@
 #include <iostream>
 
 #include <http/req_worker.h>
-#include <http/error.h>
 #include <http/msg.h>
 #include <http/req_parser.h>
-
-#include <uri/uri_error.h>
 
 
 namespace http {
@@ -15,20 +12,13 @@ namespace http {
     void req_worker::work(std::string &pkt)
     {
         try {
-            std::cout << pkt << std::endl << std::endl;
-
             struct req req; 
             req_parser parser(&req); 
             parser.parse(pkt);
             req.print();
         }
-        catch (http::error &http_err) {
-            // respond http bad request
-            print_error(http_err);
-        }
-        catch (uri::uri_error &uri_err) {
-            // respond http bad request
-            print_error(uri_err);
+        catch (std::domain_error &ex) {
+            print_error(ex);
         }
         catch (std::invalid_argument &arg_err) {
             print_error(arg_err);

@@ -7,15 +7,10 @@
 
 namespace http {
 
-    int server::start(void) {
+    void server::start(void) {
 
-        if (sockpp::socket::startup() != 0) {
-            return 1;
-        }
-
-        if (acc.open(listening_ip, listening_port) != 0) {
-            return 1;
-        }
+        sockpp::socket::startup();
+        acc.open(listening_ip, listening_port);
 
         threadpool::pool threadpool(thread_num, timeout_ms);
 
@@ -23,14 +18,10 @@ namespace http {
             sockpp::socket_t client_handle = acc.accept();
             sockpp::socket client_sock(client_handle);
 
-            if (client_handle == INVALID_SOCKET) {
-                continue;
-            }
-
             int res = client_sock.receive(recv_buf, 10000, 0);
             if (res < 0) {
                 sockpp::socket::cleanup();
-                return 1;
+                return;
             }
 
             std::string pkt(recv_buf, res);

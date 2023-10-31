@@ -1,21 +1,19 @@
-#include <string>
+#include <string_view>
 #include <iostream>
 #include <stdexcept>
 
 #include <uri/uri.h>
-#include <uri/uri_error.h>
+#include <uri/uri_parser.h>
 
 int main()
 {
     uri::uri uri;
-    std::string host, path;
+    uri::uri_parser parser(&uri);
+    std::string_view host, path;
 
     path = "/d/";
     try {
-        uri.parse_path(path.begin(), path.end());
-    }
-    catch (uri::uri_error &err) {
-        std::cout << err.what() << std::endl;
+        parser.parse_path(path.begin(), path.end());
     }
     catch (std::exception &ex) {
         std::cout << ex.what() << std::endl;

@@ -1,58 +1,60 @@
 #include <gtest/gtest.h>
 
-#include <string>
-#include <vector>
-#include <iostream>
+#include <string_view>
+#include <stdexcept>
 
-#include <http/error.h>
 #include <http/msg.h>
-#include <http/msg_constants.h>
+#include <http/req_parser.h>
 
 TEST(HttpTest, Parse_Get_Valid)
 {
-    std::vector<http::line_t> get = {
-        {"GET", "/search?q=warhammer", "HTTP/1.1"},
-        {"Connection:", "keep-alive"},
-        {"Transfer-Encoding:", "chunked"},
-        {"Host:", "www.google.com"},
-        {"Test body..."}
-    };
+    std::string_view get =
+        "GET /search?q=warhammer HTTP/1.1\r\n"
+        "Connection: keep-alive\r\n"
+        "Transfer-Encoding: chunked\r\n"
+        "Host: www.google.com\r\n"
+        "\r\n"
+        "Test body...";
 
     http::req req;
-    req.parse(get);
+    http::req_parser parser(&req);
+    parser.parse(get);
 
     ASSERT_EQ(req.method, http::get);
     ASSERT_EQ(req.uri.path, "/search");
     ASSERT_EQ(req.uri.query, "?q=warhammer");
     ASSERT_EQ(req.version.major, 1);
     ASSERT_EQ(req.version.minor, 1);
-    ASSERT_EQ(req.encoding, http::chunked);
-    ASSERT_EQ(req.field_map[http::connection_header], http::keep_alive);
-    ASSERT_EQ(req.body, get[4][0]);
+    ASSERT_EQ(req.fields[http::encoding_header], "chunked");
+    ASSERT_EQ(req.fields[http::connection_header], "keep-alive");
+    ASSERT_EQ(req.body, "Test body...");
 }
 
 TEST(HttpTest, AsterikForm)
 {
     http::req req;
-    req.parse_asterik_form("*");
+    http::req_parser parser(&req);
+
+    parser.parse_req_target("*");
     ASSERT_TRUE(req.uri.asterik);
 
-    ASSERT_THROW(req.parse_asterik_form("*/"), http::error);
+    ASSERT_THROW(parser.parse_req_target("*/"), std::domain_error);
     ASSERT_FALSE(req.uri.asterik);
 }
 
 TEST(HttpTest, OriginForm)
 {
     http::req req;
-    std::string abspath;
+    http::req_parser parser(&req);
+    std::string_view abspath;
     
     abspath = "/abs/pa1h";
-    req.parse_origin_form(abspath);
+    parser.parse_req_target(abspath);
     ASSERT_EQ(req.uri.path, abspath);
     ASSERT_EQ(req.uri.query, "");
 
     abspath = "/abs/pa1h?q=val";
-    req.parse_origin_form(abspath);
+    parser.parse_req_target(abspath);
     ASSERT_EQ(req.uri.path, "/abs/pa1h");
     ASSERT_EQ(req.uri.query, "?q=val");
 }
@@ -60,10 +62,11 @@ TEST(HttpTest, OriginForm)
 TEST(HttpTest, AuthorityForm)
 {  
     http::req req;
-    std::string path;
+    http::req_parser parser(&req);
+    std::string_view path;
     
     path = "www.google.com:8080/abs/pa1h?search=waffle";
-    req.parse_authority_form(path);
+    parser.parse_req_target(path);
     ASSERT_EQ(req.uri.reg_name, "www.google.com");
     ASSERT_EQ(req.uri.port, 8080);
 }

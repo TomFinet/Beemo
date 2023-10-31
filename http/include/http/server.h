@@ -28,6 +28,6 @@ namespace http {
                 : max_conn(max_conn), max_backlog(max_backlog), timeout_ms(timeout_ms), thread_num(thread_num),
                   listening_port(listening_port), listening_ip(listening_ip) { }
 
-            int start(void); 
+            void start(void); 
     };
 }

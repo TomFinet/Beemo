@@ -11,7 +11,13 @@ namespace http {
         std::cout << "reg_name: " << uri.reg_name << std::endl; 
         std::cout << "port: " << uri.port << std::endl;
         std::cout << "scheme: " << uri.scheme << std::endl;
-        std::cout << "path: " << uri.path << std::endl << std::endl;
+        std::cout << "path: " << uri.path << std::endl;
+
+        for (auto &x : fields) {
+            std::cout << x.first << ": " << x.second << std::endl;
+        }
+
+        std::cout << std::endl;
     }
 
 }

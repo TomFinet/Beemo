@@ -21,7 +21,7 @@ class acceptor {
          * Creates the acceptor's socket handle, binds @addr to it, and
          * changes the socket's state to listening.
          */
-        int open(const std::string ip, const int host);
+        void open(const std::string ip, const int host);
 
         /**
          * Accepts incoming connections for an open socket.

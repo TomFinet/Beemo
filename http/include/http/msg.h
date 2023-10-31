@@ -67,10 +67,12 @@ namespace http {
 
     struct req {
 
+        req() : status(unparsed), valid(true) { }
+
         /* metadata */
         target_form_t target_form;
         status_t status;
-        bool valid = true;
+        bool valid;
 
         /* request line */
         struct version version;

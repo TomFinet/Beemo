@@ -13,7 +13,7 @@ include_directories(
 )
 
 set(SRCS
-    src/uri.cpp
+  src/uri_parser.cpp
 )
 
 add_library(uri STATIC ${SRCS})
