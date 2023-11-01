@@ -21,7 +21,7 @@ int main() {
             sockpp::socket_t client_handle = acc.accept();
             sockpp::socket client_sock(client_handle);
 
-            int res = client_sock.receive(buf, BUF_SIZE, 0);
+            int res = client_sock.rx(buf, BUF_SIZE, 0);
             if (res == 0) {
                 continue;
             }

@@ -15,6 +15,11 @@ namespace sockpp {
         sock_.listen();
     }
 
+    void close(void)
+    {
+        sock_.close();
+    }
+
     socket_t acceptor::accept(void)
     {
         return sock_.accept();

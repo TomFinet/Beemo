@@ -1,14 +1,15 @@
-#include <algorithm>
 #include <string>
 #include <stdexcept>
+#include <algorithm>
 
+#include <http/http_parser.h>
 #include <http/keyword_map.h>
-#include <http/req_parser.h>
 
 #include <uri/uri_parser.h>
 
 
-namespace {
+namespace
+{
 
     constexpr auto space = ' ';
     constexpr auto crlf = "\r\n"; 
@@ -16,9 +17,6 @@ namespace {
     constexpr int version_len = 8;
     constexpr int version_major_start = 5;
     constexpr int version_minor_start = 7;
-
-    constexpr int default_port = 80;
-    constexpr auto &default_scheme = "http";
 
     unsigned int keyword_val(std::string_view keyword, const std::string &err_msg)
     {
@@ -33,59 +31,57 @@ namespace {
         return kvp->value;
     }
 
-    bool lowercase_strcmp(std::string_view lhs, std::string_view rhs) {
+    bool lowercase_strcmp(std::string_view lhs, std::string_view rhs)
+    {
         return std::ranges::equal(lhs, rhs, [](char l, char r) {
             return std::tolower(static_cast<unsigned char>(l)) ==
                    std::tolower(static_cast<unsigned char>(r)); 
         });
     }
+
 }
 
-namespace http {
-    
-    void req_parser::parse(std::string_view raw_req)
+
+namespace http
+{
+
+    std::shared_ptr<struct req> parse_headers(std::string_view raw_req)
     {
         if (raw_req.empty()) {
             throw std::domain_error("Request is empty.");
         }
 
-        if (req->status == unparsed) {
-
-            const size_t req_line_end = raw_req.find(crlf);
-            if (req_line_end == std::string_view::npos) {
-                throw std::domain_error("Request line must end with a carriage return line feed.");
-            }
-
-            std::string_view req_line(raw_req.begin(), raw_req.begin() + req_line_end); 
-            parse_req_line(req_line); 
-
-            size_t line_start = req_line_end + 2;
-            while (true) {
-
-                size_t line_end = raw_req.find(crlf, line_start);
-
-                if (line_end == std::string_view::npos) {
-                    throw std::domain_error("Bodyless request must end with a crlf.");
-                }
-
-                if (line_end == line_start) {
-                    req->status = headers;
-                    return;
-                }
-
-                std::string_view field_line(raw_req.begin() + line_start, raw_req.begin() + line_end);
-                parse_field_line(field_line);
-
-                line_start = line_end + 2;
-            }
+        const size_t req_line_end = raw_req.find(crlf);
+        if (req_line_end == std::string_view::npos) {
+            throw std::domain_error("Request line must end with a carriage return line feed.");
         }
-        else if (req->status == headers) {
-            // parsing the body here 
-            
+
+        std::shared_ptr<struct req> req = std::make_shared<struct req>();
+        std::string_view req_line(raw_req.begin(), raw_req.begin() + req_line_end); 
+
+        parse_req_line(req_line, req); 
+
+        size_t line_start = req_line_end + 2;
+        while (true) {
+
+            size_t line_end = raw_req.find(crlf, line_start);
+
+            if (line_end == std::string_view::npos) {
+                throw std::domain_error("Bodyless request must end with a crlf.");
+            }
+
+            if (line_end == line_start) {
+                return req;
+            }
+
+            std::string_view field_line(raw_req.begin() + line_start, raw_req.begin() + line_end);
+            parse_field_line(field_line, req);
+
+            line_start = line_end + 2;
         }
    }
 
-    void req_parser::parse_req_line(std::string_view req_line)
+    void parse_req_line(std::string_view req_line, std::shared_ptr<struct req> req)
     {
         if (req_line.empty()) {
             throw std::domain_error("Request line cannot be empty.");
@@ -102,16 +98,16 @@ namespace http {
             throw std::domain_error("Request line request target must be delimited by a space.");
         }
         std::string_view req_target(req_line.begin() + method_end + 1, req_line.begin() + req_target_end);
-        parse_req_target(req_target);
+        parse_req_target(req_target, req);
 
         if (req_target_end + 1 >= req_line.size()) {
             throw std::domain_error("Request line version cannot be empty.");
         }
         std::string_view version(req_line.begin() + req_target_end + 1, req_line.end());
-        parse_version(version);
+        parse_version(version, req);
     }
 
-    void req_parser::parse_req_target(std::string_view req_target)
+    void parse_req_target(std::string_view req_target, std::shared_ptr<struct req> req)
     {
         uri::uri_parser parser(&req->uri);
 
@@ -137,7 +133,7 @@ namespace http {
         }
     }
 
-    void req_parser::parse_version(std::string_view version)
+    void parse_version(std::string_view version, std::shared_ptr<struct req> req)
     {
         if (version.size() != version_len) {
             throw std::domain_error("HTTP version must be 8 characters long.");
@@ -147,7 +143,7 @@ namespace http {
         req->version.minor = std::stoi(static_cast<std::string>(version.substr(version_minor_start, 1)));
     }
 
-    void req_parser::parse_field_line(std::string_view field_line)
+    void parse_field_line(std::string_view field_line, std::shared_ptr<struct req> req)
     {
         const size_t field_name_end = field_line.find(':');
         if (field_name_end == std::string_view::npos) {
@@ -166,11 +162,11 @@ namespace http {
         req->fields[field_name] = field_value;
 
         if (lowercase_strcmp(field_name_view, host_header)) {
-            parse_header_host(field_value_view);
+            parse_field_host(field_value_view, req);
         }
     }
 
-    void req_parser::parse_header_host(std::string_view host_val)
+    void parse_field_host(std::string_view host_val, std::shared_ptr<struct req> req)
     {
         uri::uri_parser parser(&req->uri);
 
@@ -188,37 +184,11 @@ namespace http {
                 parser.parse_uri(host_val, uri::flag_scheme | uri::flag_authority);
                 break;
         }
-
-        if (req->uri.scheme == uri::no_scheme) {
-            req->uri.scheme = default_scheme;
-        }
-
-        if (req->uri.port = uri::no_port) {
-            req->uri.port = default_port;
-        }
     }
 
-    void req_parser::parse_body(std::string_view body)
+    void parse_body(std::string_view body, std::shared_ptr<struct req> req)
     {
         req->body = body;
     }
 
-    void req_parser::validate()
-    {
-        if (req->version.major != 1 || req->version.minor != 1) {
-            throw std::domain_error("Server only supports HTTP 1.1");
-        }
-
-        if (req->fields[host_header].empty()) {
-            throw std::domain_error("Host header field cannot be missing.");
-        }
-
-        if (req->uri.scheme != default_scheme) {
-            throw std::domain_error("Unsupported scheme.");
-        }
-
-        if (req->uri.userinfo.empty()) {
-            throw std::domain_error("HTTP has depricated userinfo.");
-        }
-    }
 }

@@ -43,13 +43,27 @@ namespace sockpp {
         return conn_handle;
     }
 
-    int socket::receive(char *const buf, int len, int flags)
+    int socket::rx(char *const buf, int len, int flags)
     {
         int nbytes = ::recv(handle_, buf, len, flags);
         if (nbytes == SOCKET_ERROR) {
             throw std::runtime_error("Failed to receive the incoming data.");
         }
         return nbytes;
+    }
+
+    int socket::tx(char *const buf, int len, int flags)
+    {
+        int nbytes = ::send(handle_, buf, len, flags);
+        if (nbytes == SOCKET_ERROR) {
+            throw std::runtime_error("Failed to send the bytes in the buffer.");
+        }
+        return nbytes;
+    }
+
+    void socket::close(void)
+    {
+        ::closesocket(handle_);
     }
 
     socket_t socket::handle(void)

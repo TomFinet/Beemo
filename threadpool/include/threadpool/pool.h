@@ -17,6 +17,7 @@ class pool {
 
     public:
 
+        pool();
         /* Creates and starts the threadpool:
             - threads are created
             - threads wait for queued requests

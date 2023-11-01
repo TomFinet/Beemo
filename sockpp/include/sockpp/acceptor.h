@@ -23,6 +23,8 @@ class acceptor {
          */
         void open(const std::string ip, const int host);
 
+        void close(void);
+
         /**
          * Accepts incoming connections for an open socket.
          */

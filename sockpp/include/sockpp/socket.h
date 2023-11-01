@@ -65,7 +65,10 @@ namespace sockpp {
         */
         socket_t accept(void);
 
-        int receive(char *const buf, int len, int flags);
+        int rx(char *const buf, int len, int flags);
+        int tx(char *const buf, int len, int flags);
+
+        void close(void);
 
         socket_t handle(void);
 

@@ -20,8 +20,7 @@ include_directories(
 )
 
 set(SRCS
-    src/req_parser.cpp
-    src/req_worker.cpp
+    src/http_parser.cpp
     src/msg.cpp
     src/server.cpp
 )

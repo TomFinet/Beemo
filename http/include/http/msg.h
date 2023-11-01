@@ -34,14 +34,7 @@ namespace http {
         absolute, authority, asterik, origin
     };
 
-    enum status_t {
-        unparsed, headers, completed
-    };
-
-    constexpr auto &connection_header = "connection";
-    constexpr auto &encoding_header = "transfer-encoding";
     constexpr auto &host_header = "host";
-    constexpr auto &content_type_header = "content-type";
 
     constexpr auto &ok = "200";
     constexpr auto &created = "201";
@@ -67,11 +60,10 @@ namespace http {
 
     struct req {
 
-        req() : status(unparsed), valid(true) { }
+        req() : valid(true) { }
 
         /* metadata */
         target_form_t target_form;
-        status_t status;
         bool valid;
 
         /* request line */
@@ -90,7 +82,7 @@ namespace http {
 
     constexpr int status_code_len = 4;
 
-    class response {
+    struct response {
 
         /* metadata */
 
