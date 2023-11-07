@@ -2,7 +2,7 @@
 
 namespace sockpp {
 
-    void acceptor::open(const std::string ip, const int port)
+    void acceptor::open(const std::string &ip, const int port, const unsigned int backlog)
     {
         sock_.create_handle(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -12,12 +12,10 @@ namespace sockpp {
         local.sin_port = htons(port);
 
         sock_.bind(reinterpret_cast<struct sockaddr*>(&local), sizeof(local));
-        sock_.listen();
-    }
+        sock_.listen(backlog);
 
-    void close(void)
-    {
-        sock_.close();
+        int zero = 0;
+        sock_.set_options(SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&zero), sizeof(zero));
     }
 
     socket_t acceptor::accept(void)

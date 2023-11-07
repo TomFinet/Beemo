@@ -4,6 +4,9 @@
 #include <ws2tcpip.h>
 
 #include <stdexcept>
+#include <memory>
+
+#include <sockpp/io_ctx.h>
 
 
 namespace sockpp {
@@ -58,20 +61,24 @@ namespace sockpp {
         /**
         * Changes socket state to listening on the bound address. 
         */
-        void listen(void);
+        void listen(unsigned int backlog);
+
+        void set_options(int level, int optname, const char *optval, int oplen);
 
         /**
         * Blocking call.
         */
         socket_t accept(void);
 
-        int rx(char *const buf, int len, int flags);
-        int tx(char *const buf, int len, int flags);
+        void rx(std::shared_ptr<io_ctx> ctx, const int buf_num);
+        void tx(std::shared_ptr<io_ctx> ctx, const int buf_num);
 
         void close(void);
 
         socket_t handle(void);
 
         void address(struct sockaddr *name, int *namelen);
+
+        int get_last_error(void);
     };
 }

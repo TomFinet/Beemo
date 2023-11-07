@@ -3,18 +3,28 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <vector>
 
+#include <http/conn_ctx.h>
+
+#include <sockpp/io_ctx.h>
 #include <sockpp/acceptor.h>
+#include <sockpp/io_queue.h>
+
 #include <threadpool/pool.h>
 
 
 namespace http {
+    
+    /* Used as the thread limit when creating a completion port. A value
+    of 0 is used to indicate: as many threads as this machine has processors. */
+    constexpr int nproc = 0;
 
     class server {
 
         public:
 
-            server(int buf_len, int max_conn, int max_backlog, int timeout_ms, int thread_num,
+            server(int max_msg_len, int max_conn, int max_backlog, int timeout_ms, int thread_num,
                    int listening_port, std::string &listening_ip);
             ~server();
 
@@ -25,7 +35,7 @@ namespace http {
             int default_port = 80;
             std::string default_scheme = "http";
             
-            int buf_len;
+            int max_msg_len;
             int active_conn;
             int max_conn;
             int max_backlog;
@@ -35,17 +45,17 @@ namespace http {
             int listening_port;
             std::string listening_ip;
 
-            char *rx_buf;
-            std::unique_ptr<threadpool::pool> req_pool;
             sockpp::acceptor acc;
 
-            // need some connection vector that allows us to close, read and write to the underlying socket.
+            std::unique_ptr<sockpp::io_queue<conn_ctx>> io_queue;
+            std::unique_ptr<threadpool::pool> io_workers;
 
-        /* Request handling methods. */
+            std::vector<std::shared_ptr<conn_ctx>> connections;
+
         private:
 
-            void handle_req(sockpp::socket skt, std::string_view raw_req);
-
+            void handle_io(std::shared_ptr<conn_ctx> conn, std::shared_ptr<sockpp::io_ctx> ctx);
+            void handle_close(void);
             void validate(std::shared_ptr<struct req> req);
             
     };

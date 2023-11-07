@@ -2,55 +2,84 @@
 #include <http/http_parser.h>
 
 #include <sockpp/socket.h>
-
+#include <sockpp/io_ctx.h>
 
 namespace http
 {
 
-    server::server(int buf_len, int max_conn, int max_backlog, int timeout_ms,
+    server::server(int max_msg_len, int max_conn, int max_backlog, int timeout_ms,
                    int thread_num, int listening_port, std::string &listening_ip)
-        : active_conn(0), buf_len(buf_len), max_conn(max_conn), max_backlog(max_backlog), timeout_ms(timeout_ms),
+        : active_conn(0), max_msg_len(max_msg_len), max_conn(max_conn), max_backlog(max_backlog), timeout_ms(timeout_ms),
           thread_num(thread_num), listening_port(listening_port), listening_ip(listening_ip)
     {
         sockpp::socket::startup();
-        rx_buf = new char[buf_len];
-        req_pool = std::make_unique<threadpool::pool>(thread_num, timeout_ms);
+        io_workers = std::make_unique<threadpool::pool>(thread_num, timeout_ms);
+
+        auto on_io = [this](std::shared_ptr<conn_ctx> conn,
+                            std::shared_ptr<sockpp::io_ctx> ctx)
+        {
+            this->handle_io(conn, ctx);
+        };
+
+        auto on_close = [this](void)
+        {
+            this->handle_close();
+        };
+
+        io_queue = std::make_unique<sockpp::io_queue<conn_ctx>>(nproc, on_io, on_close);
     }
 
     server::~server()
     {
-        delete[] rx_buf;
         sockpp::socket::cleanup();
     }
 
+    /* Starts the infinite loop, listening for connections, and adding valid connections
+    to the IO queue, so that future requests can be serviced by the work threadpool. */
     void server::start(void)
     {
-        acc.open(listening_ip, listening_port);
+        /* set all threads to listen for queued IO. */
+        for (int i = 0; i < thread_num; i++) {
+            io_workers->submit([this]()
+            {
+                this->io_queue->listen();
+            });
+        }
 
+        /* start listening for incoming connections. */
+        acc.open(listening_ip, listening_port, max_backlog);
         while (true) {
-            int res;
-            do { 
-                sockpp::socket client_sock(acc.accept());
+            sockpp::socket_t handle = acc.accept();
+            sockpp::socket skt {handle};
 
-                res = client_sock.rx(rx_buf, buf_len, 0);
+            /* add connected socket handle to io queue. */
+            std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(handle, conn_default);
+            connections.push_back(conn);
+            io_queue->register_socket(handle, conn.get());
 
-                std::string raw_req(rx_buf, res);
-                req_pool->submit([this](sockpp::socket skt, std::string_view raw_req)
-                {
-                    this->handle_req(skt, raw_req);
-                }, client_sock, raw_req);
-            } while (res > 0);
+            /* make initial rx request. */
+            std::shared_ptr<sockpp::io_ctx> ctx = io_queue->add_io_ctx(sockpp::io::rx);
+            skt.rx(ctx, 1);
         }
     }
 
-    void server::handle_req(sockpp::socket skt, std::string_view raw_req)
+    void server::handle_io(std::shared_ptr<conn_ctx> conn, std::shared_ptr<sockpp::io_ctx> ctx)
     {
-        std::shared_ptr<struct req> req = parse_headers(raw_req);
-        req->print();
-        char ok[9] = "200 OK\r\n";
-        skt.tx(static_cast<char *>(ok), 9, 0);
+        if (ctx->type == sockpp::io::rx) {
+            std::shared_ptr<struct req> req = parse_headers(ctx->buf);
+            req->print();
+            char ok[9] = "200 OK\r\n";
+            sockpp::socket skt {conn->handle};
+            std::shared_ptr<sockpp::io_ctx> tx_ctx = io_queue->add_io_ctx(sockpp::io::tx);
+            skt.tx(tx_ctx, 1);
+        }
     }
-    
+
+    void server::handle_close(void)
+    {
+        return;
+    }
+
     void server::validate(std::shared_ptr<struct req> req)
     {
         if (req->version.major != 1 || req->version.minor != 1) {

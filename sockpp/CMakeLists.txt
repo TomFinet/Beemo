@@ -16,11 +16,7 @@ include_directories(${CMAKE_SOURCE_DIR}/include/)
 set(SRCS
     src/socket.cpp
     src/acceptor.cpp
-    test/test.cpp
 )
 
 add_library(sockpp STATIC ${SRCS})
 target_link_libraries(sockpp wsock32 ws2_32)
-
-add_executable(sockpptest ${SRCS})
-target_link_libraries(sockpptest wsock32 ws2_32)

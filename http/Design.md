@@ -42,7 +42,19 @@ This way we have 0-copies made.
 
 We also need a way for a user of this library to register handlers based on the uri path.
 
+Currently, we accept a connection, read in data until fully read, add request to thread pool.
+What is actually wrong with this? If there is nothing to receive calling recv will block resulting
+in lower cpu utilisation.
 
-Currently, we accept a connection, receive from it once, and then close it I think.
-We want to be able to keep connections open, and read from them whenever.
-We want to be able to keep many connections open at once.
+Instead of synchronous receives, we want to use asynchrony. We make a recv call and are notified when
+the result becomes available. Then we offload the request to the threadpool.
+
+Windows calls its asynchronous sockets "overlapping sockets". The asynchronous callback is either in the
+form of an event, or a completion port. Apparently the later is preferred and scales better.
+
+Server socket should create the completion port.
+
+Completion ports:
+-----------------
+
+
