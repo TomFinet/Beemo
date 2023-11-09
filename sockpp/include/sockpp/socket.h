@@ -56,7 +56,7 @@ namespace sockpp {
         * @param nbytes Size in bytes of local address structure.
         *
         */
-        void bind(struct sockaddr *addr, int nbytes);
+        void bind(const struct sockaddr *addr, int nbytes);
 
         /**
         * Changes socket state to listening on the bound address. 
@@ -70,8 +70,8 @@ namespace sockpp {
         */
         socket_t accept(void);
 
-        void rx(std::shared_ptr<io_ctx> ctx, const int buf_num);
-        void tx(std::shared_ptr<io_ctx> ctx, const int buf_num);
+        void rx(io_ctx *const io, const int buf_num);
+        void tx(io_ctx *const io, const int buf_num);
 
         void close(void);
 

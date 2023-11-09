@@ -5,6 +5,7 @@
 #include <string_view>
 #include <vector>
 
+#include <http/msg.h>
 #include <http/conn_ctx.h>
 
 #include <sockpp/io_ctx.h>
@@ -25,7 +26,7 @@ namespace http {
         public:
 
             server(int max_msg_len, int max_conn, int max_backlog, int timeout_ms, int thread_num,
-                   int listening_port, std::string &listening_ip);
+                   int listening_port, std::string listening_ip);
             ~server();
 
             void start(void); 
@@ -50,13 +51,19 @@ namespace http {
             std::unique_ptr<sockpp::io_queue<conn_ctx>> io_queue;
             std::unique_ptr<threadpool::pool> io_workers;
 
+            /* When a new connection is made, a conn_ctx object is created.
+            A ptr to it is stored here until the connection is closed.
+            In case the connection is closed when still processing a previous io request
+            on the connection, we make this a shared_ptr.
+            We will need to synchronise this. Maybe we should have a fixed array for the max number of connections.
+            And hand out a unique index to each new connection, that way we can have multiple writes without synchronisation. */
             std::vector<std::shared_ptr<conn_ctx>> connections;
 
         private:
 
-            void handle_io(std::shared_ptr<conn_ctx> conn, std::shared_ptr<sockpp::io_ctx> ctx);
-            void handle_close(void);
-            void validate(std::shared_ptr<struct req> req);
+            void handle_io(std::shared_ptr<conn_ctx> conn, std::unique_ptr<sockpp::io_ctx> io);
+            void handle_close(std::shared_ptr<conn_ctx> conn);
+            void validate(std::shared_ptr<req> req);
             
     };
 

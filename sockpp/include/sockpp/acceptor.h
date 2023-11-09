@@ -17,6 +17,9 @@ class acceptor {
 
     public:
 
+        acceptor() { }
+        ~acceptor() { }
+
         /**
          * Creates the acceptor's socket handle, binds @addr to it, and
          * changes the socket's state to listening.

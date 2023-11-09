@@ -1,1 +1,9 @@
 README.md
+build/*
+build/
+.vs/*
+.vs/
+.vscode/
+.vscode/*
+out/*
+out/

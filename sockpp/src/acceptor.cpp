@@ -1,5 +1,7 @@
 #include <sockpp/acceptor.h>
 
+#include <iostream>
+
 namespace sockpp {
 
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog)

@@ -1,6 +1,6 @@
 #include <sockpp/socket.h>
+#include <iostream>
 
-/* This socket implementation is for overlapped (i.e. asynchronous) IO. */
 
 namespace sockpp {
 
@@ -13,13 +13,13 @@ namespace sockpp {
 
     void socket::create_handle(int family, int type, int protocol)
     {
-        handle_ = ::WSASocketW(family, type, protocol, NULL, 0, WSA_FLAG_OVERLAPPED); 
+        handle_ = ::WSASocketW(family, type, protocol, nullptr, 0, WSA_FLAG_OVERLAPPED); 
         if (handle_ == INVALID_SOCKET) {
             throw std::runtime_error("Failed to create the socket.");
         }
     }
 
-    void socket::bind(struct sockaddr *addr, int nbytes)
+    void socket::bind(const struct sockaddr *addr, int nbytes)
     {
         int err = ::bind(handle_, addr, nbytes);
         if (err == SOCKET_ERROR) {
@@ -46,30 +46,31 @@ namespace sockpp {
     socket_t socket::accept(void)
     {
         /* extract first connection on the queue of pending connections for this socket. */
-        socket_t conn_handle = ::WSAAccept(handle_, NULL, NULL, NULL, 0);
+        socket_t conn_handle = ::WSAAccept(handle_, nullptr, nullptr, nullptr, 0);
         if (conn_handle == INVALID_SOCKET) {
             throw std::runtime_error("Failed to accept an incoming connection.");
         }
         return conn_handle;
     }
 
-    void socket::rx(std::shared_ptr<io_ctx> ctx, const int buf_num)
+    void socket::rx(io_ctx *const io, const int buf_num)
     {
-        DWORD nbytes = 0;
-        DWORD flags = 0;
-        int err = ::WSARecv(handle_, &ctx->buf_desc, buf_num, &nbytes, &flags,
-                            reinterpret_cast<OVERLAPPED*>(ctx.get()), NULL);
+        unsigned long nbytes = 0;
+        unsigned long flags = 0;
+        int err = ::WSARecv(handle_, &io->buf_desc, buf_num, &nbytes, &flags, (OVERLAPPED*)io, nullptr);
         if (err == SOCKET_ERROR && (ERROR_IO_PENDING != get_last_error())) {
+            delete io;
             throw std::runtime_error("Failed to receive the incoming data.");
         }
     }
 
-    void socket::tx(std::shared_ptr<io_ctx> ctx, const int buf_num)
+    void socket::tx(io_ctx *const io, const int buf_num)
     {
         DWORD nbytes = 0;
-        int err = ::WSASend(handle_, &ctx->buf_desc, buf_num, &nbytes, 0,
-                            reinterpret_cast<OVERLAPPED*>(ctx.get()), NULL);
+        int err = ::WSASend(handle_, &io->buf_desc, buf_num, &nbytes, 0,
+                            (OVERLAPPED*)io, nullptr);
         if (err == SOCKET_ERROR && (ERROR_IO_PENDING != get_last_error())) {
+            delete io;
             throw std::runtime_error("Failed to send the bytes in the buffer.");
         }
     }
@@ -94,7 +95,8 @@ namespace sockpp {
 
     int socket::get_last_error(void)
     {
-        return WSAGetLastError();
+        last_error_ = WSAGetLastError();
+        return last_error_;
     }
 
 }
