@@ -8,7 +8,7 @@
 std::string ip = "127.0.0.1";
 int buf_len = 10000;
 int port = 9001;
-int thread_num = 4;
+int thread_num = 8;
 int timeout_ms = 2000;
 
 int main()

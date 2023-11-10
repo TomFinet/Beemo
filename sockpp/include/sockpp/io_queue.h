@@ -29,17 +29,17 @@ namespace sockpp
          
         private:
 
-            typedef std::function<void(std::shared_ptr<key_t>, std::unique_ptr<io_ctx>)> io_cb_t;
+            typedef std::function<void(key_t*, std::unique_ptr<io_ctx>)> io_cb_t;
 
             void *queue_handle_;
 
             io_cb_t on_io;
-            std::function<void(std::shared_ptr<key_t>)> on_client_close;
+            std::function<void(key_t*)> on_client_close;
 
         public:
 
             io_queue(unsigned int thread_num, io_cb_t on_io,
-                     std::function<void(std::shared_ptr<key_t>)> on_client_close)
+                     std::function<void(key_t*)> on_client_close)
                 : on_io(on_io), on_client_close(on_client_close)
             {
                 /* create the io queue. */
@@ -71,7 +71,7 @@ namespace sockpp
                     /* attempt to dequeue an IO completion packet from the completion port. */
                     bool success = GetQueuedCompletionStatus(queue_handle_, &io_size, (PULONG_PTR)&key, (LPOVERLAPPED *)&io, INFINITE);
                     if (!success) {
-                        std::cout << GetLastError() << std::endl;
+                        std::cout << "error code: " << GetLastError() << std::endl;
                         throw std::runtime_error("Failed to dequeue from io queue.");
                     }
 
@@ -79,19 +79,15 @@ namespace sockpp
                         return;
                     }
 
-                    std::shared_ptr<key_t> key_ptr;
-                    key_ptr.reset(key);
-
                     if (io_size == 0) {
                         /* client closed the connection. */
-                        std::cout << "client closed the connection" << std::endl;
-                        on_client_close(key_ptr);
+                        on_client_close(key);
                         continue;
                     }
 
                     std::unique_ptr<io_ctx> io_ctx;
                     io_ctx.reset(io);
-                    on_io(key_ptr, std::move(io_ctx));
+                    on_io(key, std::move(io_ctx));
                 }
             }
             

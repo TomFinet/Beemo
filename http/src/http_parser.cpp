@@ -45,7 +45,7 @@ namespace
 namespace http
 {
 
-    std::shared_ptr<struct req> parse_headers(std::string_view raw_req)
+    std::unique_ptr<req> parse_headers(std::string_view raw_req)
     {
         if (raw_req.empty()) {
             throw std::domain_error("Request is empty.");
@@ -56,10 +56,10 @@ namespace http
             throw std::domain_error("Request line must end with a carriage return line feed.");
         }
 
-        std::shared_ptr<struct req> req = std::make_shared<struct req>();
+        std::unique_ptr<req> req = std::make_unique<struct req>();
         std::string_view req_line(raw_req.begin(), raw_req.begin() + req_line_end); 
 
-        parse_req_line(req_line, req); 
+        parse_req_line(req_line, req.get()); 
 
         size_t line_start = req_line_end + 2;
         while (true) {
@@ -71,17 +71,17 @@ namespace http
             }
 
             if (line_end == line_start) {
-                return req;
+                return std::move(req);
             }
 
             std::string_view field_line(raw_req.begin() + line_start, raw_req.begin() + line_end);
-            parse_field_line(field_line, req);
+            parse_field_line(field_line, req.get());
 
             line_start = line_end + 2;
         }
    }
 
-    void parse_req_line(std::string_view req_line, std::shared_ptr<struct req> req)
+    void parse_req_line(std::string_view req_line, req *const req)
     {
         if (req_line.empty()) {
             throw std::domain_error("Request line cannot be empty.");
@@ -107,7 +107,7 @@ namespace http
         parse_version(version, req);
     }
 
-    void parse_req_target(std::string_view req_target, std::shared_ptr<struct req> req)
+    void parse_req_target(std::string_view req_target, req *const req)
     {
         uri::uri_parser parser(&req->uri);
 
@@ -133,7 +133,7 @@ namespace http
         }
     }
 
-    void parse_version(std::string_view version, std::shared_ptr<struct req> req)
+    void parse_version(std::string_view version, req *const req)
     {
         if (version.size() != version_len) {
             throw std::domain_error("HTTP version must be 8 characters long.");
@@ -143,7 +143,7 @@ namespace http
         req->version.minor = std::stoi(static_cast<std::string>(version.substr(version_minor_start, 1)));
     }
 
-    void parse_field_line(std::string_view field_line, std::shared_ptr<struct req> req)
+    void parse_field_line(std::string_view field_line, req *const req)
     {
         const size_t field_name_end = field_line.find(':');
         if (field_name_end == std::string_view::npos) {
@@ -166,7 +166,7 @@ namespace http
         }
     }
 
-    void parse_field_host(std::string_view host_val, std::shared_ptr<struct req> req)
+    void parse_field_host(std::string_view host_val, req *const req)
     {
         uri::uri_parser parser(&req->uri);
 
@@ -186,7 +186,7 @@ namespace http
         }
     }
 
-    void parse_body(std::string_view body, std::shared_ptr<struct req> req)
+    void parse_body(std::string_view body, req *const req)
     {
         req->body = body;
     }

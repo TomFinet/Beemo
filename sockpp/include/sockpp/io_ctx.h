@@ -7,7 +7,7 @@
 
 namespace
 {
-    constexpr int max_rx_len = 100000;
+    constexpr int max_rx_len = 10000;
 }
 
 namespace sockpp
@@ -31,7 +31,7 @@ namespace sockpp
 
         io::type type;
 
-        io_ctx(io::type type) : type(type), bytes_total(0), bytes_tx(0), bytes_rx(0), overlapped{0}
+        io_ctx(io::type type) : buf{0}, type(type), bytes_total(0), bytes_tx(0), bytes_rx(0), overlapped{0}
         {
             buf_desc.buf = buf;
             buf_desc.len = max_rx_len;

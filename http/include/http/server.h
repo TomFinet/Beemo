@@ -3,7 +3,9 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
+#include <mutex>
+#include <condition_variable>
+#include <unordered_map>
 
 #include <http/msg.h>
 #include <http/conn_ctx.h>
@@ -57,13 +59,16 @@ namespace http {
             on the connection, we make this a shared_ptr.
             We will need to synchronise this. Maybe we should have a fixed array for the max number of connections.
             And hand out a unique index to each new connection, that way we can have multiple writes without synchronisation. */
-            std::vector<std::shared_ptr<conn_ctx>> connections;
+            std::unordered_map<sockpp::socket_t, std::shared_ptr<conn_ctx>> connections;
+            std::mutex conn_mutex;
+            std::condition_variable condition;
 
         private:
 
-            void handle_io(std::shared_ptr<conn_ctx> conn, std::unique_ptr<sockpp::io_ctx> io);
-            void handle_close(std::shared_ptr<conn_ctx> conn);
-            void validate(std::shared_ptr<req> req);
+            void add_conn(std::shared_ptr<conn_ctx> conn);
+            void handle_io(conn_ctx *conn, std::unique_ptr<sockpp::io_ctx> io);
+            void handle_close(conn_ctx *conn);
+            void validate(req *const req);
             
     };
 

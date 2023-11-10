@@ -16,14 +16,15 @@ namespace http
           thread_num(thread_num), listening_port(listening_port), listening_ip(listening_ip)
     {
         sockpp::socket::startup();
+
         io_workers = std::make_unique<threadpool::pool>(thread_num, timeout_ms);
         io_queue = std::make_unique<sockpp::io_queue<conn_ctx>>(thread_num,
-            [this](std::shared_ptr<conn_ctx> conn,
+            [this](conn_ctx *conn,
                    std::unique_ptr<sockpp::io_ctx> io)
             {
                 this->handle_io(conn, std::move(io));
             },
-            [this](std::shared_ptr<conn_ctx> conn)
+            [this](conn_ctx *conn)
             {
                 this->handle_close(conn);
             }
@@ -57,41 +58,50 @@ namespace http
 
         while (true) {
             sockpp::socket_t handle = acc.accept();
-            sockpp::socket skt {handle};
+            std::unique_ptr<sockpp::socket> skt = std::make_unique<sockpp::socket>(handle);
 
             /* add connected socket handle to io queue. */
-            std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(handle, conn_default);
+            std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(std::move(skt), conn_default);
+            add_conn(conn);
+
             io_queue->register_socket(handle, conn.get());
-            connections.push_back(conn);
 
             /* make initial rx request. io context is freed when the request has been serviced.
             winsock tracks the address of the io_ctx for us, until io completion packet is queued.
             Freed by unique_ptr, or manually deleted if error encountered before queuing. */
-            sockpp::io_ctx *const io = new sockpp::io_ctx(sockpp::io::rx);
-            skt.rx(io, 1);
+            sockpp::io_ctx *const io_rx = new sockpp::io_ctx(sockpp::io::rx);
+            conn->skt->rx(io_rx, 1);
         }
     }
 
-    void server::handle_io(std::shared_ptr<conn_ctx> conn, std::unique_ptr<sockpp::io_ctx> io)
+    void server::handle_io(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
     {
         if (io->type == sockpp::io::rx) {
-            std::shared_ptr<req> req = parse_headers(io->buf);
+            std::unique_ptr<req> req = parse_headers(io->buf);
             req->print();
+            validate(req.get());
+
+            std::shared_ptr conn = connections[conn_ptr->skt->handle()];
 
             char ok[9] = "200 OK\r\n";
-            sockpp::socket skt {conn->handle};
-            sockpp::io_ctx *const tx_io = new sockpp::io_ctx(sockpp::io::rx);
-            skt.tx(tx_io, 1);
+            sockpp::io_ctx *const tx_io = new sockpp::io_ctx(sockpp::io::tx);
+            conn->skt->tx(tx_io, 1);
         }
     }
+    
+    void server::add_conn(std::shared_ptr<conn_ctx> conn)
+    {
+        std::unique_lock<std::mutex> lock(conn_mutex);
+        connections[conn->skt->handle()] = conn;
+    }
 
-    void server::handle_close(std::shared_ptr<conn_ctx> conn)
+    void server::handle_close(conn_ctx *conn)
     {
         std::cout << "handle_close" << std::endl;
         return;
     }
 
-    void server::validate(std::shared_ptr<req> req)
+    void server::validate(req *const req)
     {
         if (req->version.major != 1 || req->version.minor != 1) {
             throw std::domain_error("Server only supports HTTP 1.1");

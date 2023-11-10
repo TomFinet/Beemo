@@ -6,6 +6,7 @@ namespace sockpp {
 
     socket::~socket()
     {
+        std::cout << "~socket()" << std::endl;
         if (handle_ != INVALID_SOCKET) {
             closesocket(handle_);
         }
@@ -70,6 +71,7 @@ namespace sockpp {
         int err = ::WSASend(handle_, &io->buf_desc, buf_num, &nbytes, 0,
                             (OVERLAPPED*)io, nullptr);
         if (err == SOCKET_ERROR && (ERROR_IO_PENDING != get_last_error())) {
+            std::cout << "tx error: " << last_error_ << std::endl;
             delete io;
             throw std::runtime_error("Failed to send the bytes in the buffer.");
         }

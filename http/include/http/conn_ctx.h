@@ -1,5 +1,8 @@
 #pragma once
 
+#include <memory>
+#include <iostream>
+
 #include <sockpp/socket.h>
 
 namespace http
@@ -13,10 +16,13 @@ namespace http
 
     /* Stores the connection context used by the server to process io. */
     struct conn_ctx {
-        sockpp::socket_t handle;
+        std::unique_ptr<sockpp::socket> skt;
         unsigned int status;
 
-        conn_ctx(sockpp::socket_t handle, unsigned int status) : handle(handle), status(status) { }
+        conn_ctx(std::unique_ptr<sockpp::socket> skt, unsigned int status)
+            : skt(std::move(skt)), status(status) { }
+
+        ~conn_ctx() { }
     };
 
 }
