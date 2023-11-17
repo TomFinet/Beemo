@@ -33,14 +33,15 @@ namespace sockpp
 
             void *queue_handle_;
 
-            io_cb_t on_io;
+            io_cb_t on_rx;
+            io_cb_t on_tx;
             std::function<void(key_t*)> on_client_close;
 
         public:
 
-            io_queue(unsigned int thread_num, io_cb_t on_io,
+            io_queue(unsigned int thread_num, io_cb_t on_rx, io_cb_t on_tx,
                      std::function<void(key_t*)> on_client_close)
-                : on_io(on_io), on_client_close(on_client_close)
+                : on_rx(on_rx), on_tx(on_tx), on_client_close(on_client_close)
             {
                 /* create the io queue. */
                 queue_handle_ = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, thread_num);
@@ -79,15 +80,27 @@ namespace sockpp
                         return;
                     }
 
+                    std::cout << std::endl << "io_size: " << io_size << ", io_type: " << ((io->type == io::type::rx) ? "rx" : "tx") << std::endl;
+                    if (io->type == io::type::tx) {
+                        std::cout << io->buf << std::endl;
+                    }
+
                     if (io_size == 0) {
-                        /* client closed the connection. */
+                        std::cout << "client closed the connection." << std::endl;
                         on_client_close(key);
                         continue;
                     }
-
+                    
                     std::unique_ptr<io_ctx> io_ctx;
                     io_ctx.reset(io);
-                    on_io(key, std::move(io_ctx));
+
+                    if (io->type == io::type::rx) {
+                        on_rx(key, std::move(io_ctx));
+                    }
+                    else if (io->type == io::type::tx) {
+                        io->bytes_tx += io_size;
+                        on_tx(key, std::move(io_ctx));
+                    }
                 }
             }
             

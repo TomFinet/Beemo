@@ -2,6 +2,7 @@
 
 #include <string>
 #include <unordered_map>
+#include <queue>
 
 #include <uri/uri.h>
 
@@ -14,25 +15,21 @@ namespace http {
     };
 
     enum method_t {
+        method_invalid,
         get, post, options, head, put,
-        del, trace, connect, extension 
+        del, trace, connect, extension
     };
 
-    enum conn_t {
-        keep_alive, close 
-    };
+    enum conn_t { conn_invalid, keep_alive, close };
 
-    enum encoding_t {
-        chunked, identity, gzip, compress, deflate 
-    };
+    enum encoding_t { encoding_invalid, chunked, identity, gzip, compress, deflate };
 
-    enum content_type_t {
-        html, json
-    };
+    enum content_type_t { content_type_invalid, html, json };
 
-    enum target_form_t {
-        absolute, authority, asterik, origin
-    };
+    enum target_form_t { absolute, authority, asterik, origin };
+    
+    /* Indicates what stage of message parsing we are at. */
+    enum parse_state_t { start_line, headers, content, complete };
 
     constexpr auto &host_header = "host";
 
@@ -45,7 +42,7 @@ namespace http {
     constexpr auto &moved_permanently = "301";
     constexpr auto &found = "302";
 
-    constexpr auto &bad_req = "400";
+    //constexpr auto &bad_req = "400";
     constexpr auto &unauthorised = "401";
     constexpr auto &forbidden = "403";
     constexpr auto &not_found = "404";
@@ -57,14 +54,20 @@ namespace http {
     constexpr auto &not_implemented = "501";
     constexpr auto &bad_gateway = "502";
     constexpr auto &service_unavailable = "503";
+    
+    /* forward declaration to break circular dependency. */
+    class err_handler;
 
+    /* A request is not necessarily fully sent in a single TCP, we need to account for this.
+    If we have not hit the double CLRF yet, then we are still reading header fields.*/
     struct req {
 
-        req() : valid(true) { }
+        req() : parse_state(start_line), err(nullptr), content_len(0) { }
 
         /* metadata */
         target_form_t target_form;
-        bool valid;
+        err_handler *err;
+        parse_state_t parse_state;
 
         /* request line */
         struct version version;
@@ -74,10 +77,16 @@ namespace http {
         /* fields */
         std::unordered_map<std::string, std::string> fields;
 
+        /* parsed fields */
+        unsigned int content_len;
+        /* in order of preference. */
+        std::queue<encoding_t> transfer_encodings;
+
         /* body */
-        std::string body;
+        std::string content;
 
         void print(void) const;
+        bool has_err(void) const;
     };
 
     constexpr int status_code_len = 4;
@@ -88,14 +97,18 @@ namespace http {
 
         /* status line */
         struct version version;
-        char status_code[status_code_len];
+        unsigned short status_code;
         std::string reason; 
 
         /* fields */
         std::unordered_map<std::string, std::string> fields;
 
-        /* body */
-        std::string body;
+        std::string content;
+
+        response() : version{1, 1} { }
+        response(unsigned short status_code, const std::string &reason)
+            : version{1, 1}, status_code(status_code), reason(reason) { }
+
     };
 
 }

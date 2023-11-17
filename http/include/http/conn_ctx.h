@@ -4,25 +4,86 @@
 #include <iostream>
 
 #include <sockpp/socket.h>
+#include <sockpp/io_ctx.h>
+
+#include <http/msg.h>
 
 namespace http
 {
 
-    constexpr unsigned int conn_open = 1;
-    constexpr unsigned int conn_closed = 2;
-    constexpr unsigned int conn_read = 4;
-    constexpr unsigned int conn_write = 8;
-    constexpr unsigned int conn_default = conn_open | conn_read | conn_write;
+    constexpr unsigned int conn_keep_alive = 1;
+    constexpr unsigned int conn_rx_closed = 2;
+    constexpr unsigned int conn_tx_closed = 4;
 
     /* Stores the connection context used by the server to process io. */
     struct conn_ctx {
         std::unique_ptr<sockpp::socket> skt;
+        /* only one request and response at any one time for a connection. */
+        std::unique_ptr<req> request;
+        std::unique_ptr<response> res;
         unsigned int status;
 
-        conn_ctx(std::unique_ptr<sockpp::socket> skt, unsigned int status)
-            : skt(std::move(skt)), status(status) { }
+        /* transport packets do not necessarily contain the entire
+        HTTP request, hence we may need to glue multiple transport packets together. */
+        std::string reassembly_buf;
+        /* index we have parsed up to, so that next parse can avoid redoing the same work. */
+        size_t parsed_to_idx;
 
-        ~conn_ctx() { }
+        conn_ctx(std::unique_ptr<sockpp::socket> skt)
+            : skt(std::move(skt)), status(conn_keep_alive), request(std::make_unique<req>()), parsed_to_idx(0) { }
+
+
+        void rx(void)
+        {
+            if (!(status & conn_rx_closed)) {
+                skt->rx(new sockpp::io_ctx(sockpp::io::rx), 1);
+            }
+        }
+
+        void tx(std::string_view msg)
+        {
+            if (!(status & conn_tx_closed)) {
+                sockpp::io_ctx *tx_io = new sockpp::io_ctx(sockpp::io::tx);
+                tx_io->write_buf(msg);
+                skt->tx(tx_io, 1);
+            }
+        }
+
+        /* when we have parsed a request or encountered an error,
+        we call reset_req to start the next request fresh. */
+        void reset_req(void)
+        {
+            reassembly_buf.clear();
+            reassembly_buf.shrink_to_fit();
+
+            parsed_to_idx = 0;
+
+            request->fields.clear();
+            request->content.clear();
+            request->content.shrink_to_fit();
+            request->err = nullptr;
+            request->uri = {0};
+            request->parse_state = start_line;
+            std::queue<encoding_t> empty_encoding_queue;
+            std::swap(request->transfer_encodings, empty_encoding_queue);
+        }
+
+        void close_tx(void)
+        {
+            skt->close_tx();
+            status |= conn_tx_closed;
+        }
+
+        void close(void)
+        {
+            close_tx();
+            skt->close();
+        }
+
+        ~conn_ctx()
+        {
+            close();
+        }
     };
 
 }

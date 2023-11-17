@@ -28,9 +28,11 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/sockpp/include/
     ${CMAKE_SOURCE_DIR}/http/include/
     ${CMAKE_SOURCE_DIR}/threadpool/include/
+    ${CMAKE_SOURCE_DIR}/utils/include/
 )
 
 add_subdirectory(threadpool)
 add_subdirectory(sockpp)
 add_subdirectory(uri)
 add_subdirectory(http)
+add_subdirectory(utils)

@@ -7,54 +7,47 @@ of the request, thus avoiding all copies.
 past its scope.
 
 
-What IDIOM to use?
+HTTP responses:
 
-- Pimpl is an option but:
-    - adds additional read due to pointer indirection when accessing private data. Is this true?
-    surely: impl->x is one read at address of (impl) + offset(x)
-
+- include Content-Length field to indicate the size of the response body.
+- 
 
 
-Where to put the http message parsing code?
-
-- since it is stateless, we structure it as functions in the http namespace.
-- a header file with the forward declarations of these functions.
-- an impl file with the definitions.
-- server's implementation will import the header file.
-- test's will import the header file. 
-- the server header does not mention any of these internals.
+The memory for a request object should exist within the connection object.
+We use it to store parsed requests, and once done with one, re-use it for any other potential requests.
 
 
-A server must manage many connections at the same time.
-It makes sense for it to store information about each connection:
+TODO:
+-----
 
-- client socket file descriptor.
-- connection status. 
-
-
-Currently, we accept incoming connections and rx data into a receive buffer.
-Then copy this receive buffer as a parameter to the request handler.
-
-We actually want to receive the data into a request specific buffer which has the same lifetime
-as the server object. Then we can just use string_view to point to it in all our request handling.
-This way we have 0-copies made.
+Timeouts
+Blacklist
 
 
-We also need a way for a user of this library to register handlers based on the uri path.
+If we handle request errors (bad_requests/semantics) with exceptions, we hit the slow exception path
+for badly formed requests. We want request error handling to be fast, so we should favour early returning
+with an error return value.
 
-Currently, we accept a connection, read in data until fully read, add request to thread pool.
-What is actually wrong with this? If there is nothing to receive calling recv will block resulting
-in lower cpu utilisation.
+can have a
 
-Instead of synchronous receives, we want to use asynchrony. We make a recv call and are notified when
-the result becomes available. Then we offload the request to the threadpool.
+struct http_err {
 
-Windows calls its asynchronous sockets "overlapping sockets". The asynchronous callback is either in the
-form of an event, or a completion port. Apparently the later is preferred and scales better.
+    code_t code;
+    action_t action;
 
-Server socket should create the completion port.
+}
 
-Completion ports:
------------------
+as return value.
+
+handle_rx ==calls==> parse_headers
+
+if parse headers returns nullptr, then no errors.
+else handle_rx calls an error handling method to handle the error appropriately. Plus we want to handle
+the error immediately, without needing to pass the error up the call stack. Thus exceptions are avoided in favour of returning errors as part of the request object metadata.
+
+instead of http error object with a field for the error type and action to take,
+where a large switch statement would be needed for each of the field values, we make a class hierarchy
+of error objects each overriding the handle method. If no error exists, the req error is 
 
 
+Today: work on transfer-encoding and content-length.

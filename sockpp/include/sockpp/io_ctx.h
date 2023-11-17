@@ -7,7 +7,8 @@
 
 namespace
 {
-    constexpr int max_rx_len = 10000;
+    constexpr int max_rx_len = 150;
+    constexpr int init_rx_len = 1000;
 }
 
 namespace sockpp
@@ -25,19 +26,32 @@ namespace sockpp
 
         char buf[max_rx_len];
 
-        unsigned int bytes_total;
-        unsigned int bytes_tx;
-        unsigned int bytes_rx;
+        /* current number of bytes sent. */
+        size_t bytes_tx;
+        /* total number of bytes to send. */
+        size_t bytes_to_tx;
 
         io::type type;
 
-        io_ctx(io::type type) : buf{0}, type(type), bytes_total(0), bytes_tx(0), bytes_rx(0), overlapped{0}
+        io_ctx(io::type type)
+            : buf{0}, type(type), bytes_tx(0), bytes_to_tx(0), overlapped{0}
         {
             buf_desc.buf = buf;
             buf_desc.len = max_rx_len;
         }
 
         ~io_ctx() {}
+
+        /* Writes the data pointed to by the string view into the io buffer.
+        Also updates the buffer descriptors and metadata. */
+        void write_buf(std::string_view data)
+        {
+            strncpy_s(buf, data.data(), data.size());
+            buf_desc.len = static_cast<unsigned long>(data.size());
+            bytes_to_tx = data.size();
+            bytes_tx = 0;
+        }
+
     };
     
 }

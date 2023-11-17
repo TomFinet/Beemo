@@ -73,6 +73,7 @@ namespace sockpp {
         void rx(io_ctx *const io, const int buf_num);
         void tx(io_ctx *const io, const int buf_num);
 
+        void close_tx(void);
         void close(void);
 
         socket_t handle(void);

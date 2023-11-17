@@ -1,5 +1,7 @@
 #include <http/server.h>
 #include <http/http_parser.h>
+#include <http/http_semantics.h>
+#include <http/http_err.h>
 
 #include <sockpp/socket.h>
 #include <sockpp/io_ctx.h>
@@ -10,24 +12,21 @@ namespace http
 {
 
     server::server(int max_msg_len, int max_conn, int max_backlog, int timeout_ms,
-                   int thread_num, int listening_port, std::string listening_ip)
+                   int thread_num, int listening_port, const std::string &listening_ip)
 
         : active_conn(0), max_msg_len(max_msg_len), max_conn(max_conn), max_backlog(max_backlog), timeout_ms(timeout_ms),
-          thread_num(thread_num), listening_port(listening_port), listening_ip(listening_ip)
+          thread_num(thread_num), listening_port(listening_port), listening_ip(listening_ip),
+          default_port_(default_port), default_scheme_(default_scheme)
     {
         sockpp::socket::startup();
 
         io_workers = std::make_unique<threadpool::pool>(thread_num, timeout_ms);
         io_queue = std::make_unique<sockpp::io_queue<conn_ctx>>(thread_num,
-            [this](conn_ctx *conn,
-                   std::unique_ptr<sockpp::io_ctx> io)
-            {
-                this->handle_io(conn, std::move(io));
-            },
-            [this](conn_ctx *conn)
-            {
-                this->handle_close(conn);
-            }
+            [this](conn_ctx *conn, std::unique_ptr<sockpp::io_ctx> io)
+            { this->handle_rx(conn, std::move(io)); },
+            [this](conn_ctx *conn, std::unique_ptr<sockpp::io_ctx> io)
+            { this->handle_tx(conn, std::move(io)); },
+            [this](conn_ctx *conn) { this->handle_close(conn); }
         );
     }
 
@@ -61,7 +60,7 @@ namespace http
             std::unique_ptr<sockpp::socket> skt = std::make_unique<sockpp::socket>(handle);
 
             /* add connected socket handle to io queue. */
-            std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(std::move(skt), conn_default);
+            std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(std::move(skt));
             add_conn(conn);
 
             io_queue->register_socket(handle, conn.get());
@@ -69,55 +68,92 @@ namespace http
             /* make initial rx request. io context is freed when the request has been serviced.
             winsock tracks the address of the io_ctx for us, until io completion packet is queued.
             Freed by unique_ptr, or manually deleted if error encountered before queuing. */
-            sockpp::io_ctx *const io_rx = new sockpp::io_ctx(sockpp::io::rx);
-            conn->skt->rx(io_rx, 1);
+            conn->rx();
         }
     }
 
-    void server::handle_io(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
+    /* Responsible for handling transport layer rx completion. */
+    void server::handle_rx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
     {
-        if (io->type == sockpp::io::rx) {
-            std::unique_ptr<req> req = parse_headers(io->buf);
-            req->print();
-            validate(req.get());
+        std::shared_ptr<conn_ctx> conn = connections[conn_ptr->skt->handle()];
 
-            std::shared_ptr conn = connections[conn_ptr->skt->handle()];
+        conn->reassembly_buf += std::string(io->buf, io->buf_desc.len);
 
-            char ok[9] = "200 OK\r\n";
-            sockpp::io_ctx *const tx_io = new sockpp::io_ctx(sockpp::io::tx);
-            conn->skt->tx(tx_io, 1);
+        if (conn->request->parse_state != content) {
+            conn->parsed_to_idx = parse_headers(conn->reassembly_buf, conn->parsed_to_idx, conn->request.get());
+            std::cout << conn->parsed_to_idx << std::endl;
         }
+
+        conn->request->print();
+
+        if (conn->request->parse_state != content) {
+            /* We have not fully parsed the headers ==> issue an rx req for them. */
+            conn->rx();
+            return;
+        }
+
+        /* raw_content may not be the full content, we may need to make a new recv request to read all the content,
+        if what we have seen so far is error free. */
+        std::cout << conn->parsed_to_idx << std::endl;
+        parse_content(conn->parsed_to_idx, conn->request.get());
+        if (conn->request->parse_state != complete) {
+            /* issue a new recv request to get the rest of the message content. */
+            conn->rx();
+            return;
+        }
+
+        /* important to parse the full message before responding with errors
+        to get msg out of io queue. */
+        if (conn->request->has_err()) {
+            conn->request->err->handle(conn);
+            return;
+        }
+
+        conn->reset_req();
+        conn->tx("HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHowdy cowboy!");
     }
     
+    void server::handle_tx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
+    {
+        std::shared_ptr conn = connections[conn_ptr->skt->handle()];
+        if (io->bytes_tx < io->bytes_to_tx) {
+            /* not all bytes have been tx'ed, issue a tx req to send the rest. */
+            /* move to some sort of copy constructor. */
+            sockpp::io_ctx *const tx_io = new sockpp::io_ctx(sockpp::io::tx);
+            tx_io->write_buf(tx_io->buf + io->bytes_tx);
+            tx_io->bytes_to_tx = io->bytes_to_tx;
+            tx_io->bytes_tx = io->bytes_tx;
+            conn->skt->tx(tx_io, 1);
+        }
+        
+        if (!(conn->status & conn_keep_alive)) {
+            std::cout << "closing the connection after successful response" << std::endl;
+            handle_close(conn_ptr);
+        }
+        else {
+            std::cout << "sending successful, listening for more rx's" << std::endl;
+            conn->rx();
+        }
+    }
+
     void server::add_conn(std::shared_ptr<conn_ctx> conn)
     {
         std::unique_lock<std::mutex> lock(conn_mutex);
         connections[conn->skt->handle()] = conn;
     }
 
-    void server::handle_close(conn_ctx *conn)
+    void server::remove_conn(sockpp::socket_t conn_handle)
     {
-        std::cout << "handle_close" << std::endl;
-        return;
+        std::unique_lock<std::mutex> lock(conn_mutex);
+        connections.erase(conn_handle);
     }
 
-    void server::validate(req *const req)
+    /* Client has initiated a graceful close of the connection. */
+    void server::handle_close(conn_ctx *conn)
     {
-        if (req->version.major != 1 || req->version.minor != 1) {
-            throw std::domain_error("Server only supports HTTP 1.1");
-        }
-
-        if (req->fields[host_header].empty()) {
-            throw std::domain_error("Host header field cannot be missing.");
-        }
-
-        if (!req->uri.scheme.empty() && req->uri.scheme != default_scheme) {
-            throw std::domain_error("Unsupported scheme.");
-        }
-
-        if (req->uri.userinfo.empty()) {
-            throw std::domain_error("HTTP has depricated userinfo.");
-        }
+        conn->status |= conn_rx_closed;
+        conn->close_tx();
+        remove_conn(conn->skt->handle());
     }
 
 }

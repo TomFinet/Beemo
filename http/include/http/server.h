@@ -22,22 +22,24 @@ namespace http {
     /* Used as the thread limit when creating a completion port. A value
     of 0 is used to indicate: as many threads as this machine has processors. */
     constexpr int nproc = 0;
+    constexpr int default_port = 80;
+    constexpr auto &default_scheme = "http";
 
     class server {
 
         public:
 
             server(int max_msg_len, int max_conn, int max_backlog, int timeout_ms, int thread_num,
-                   int listening_port, std::string listening_ip);
+                   int listening_port, const std::string &listening_ip);
             ~server();
 
             void start(void); 
 
         private:
 
-            int default_port = 80;
-            std::string default_scheme = "http";
-            
+            std::string default_scheme_;
+            int default_port_;
+
             int max_msg_len;
             int active_conn;
             int max_conn;
@@ -66,10 +68,11 @@ namespace http {
         private:
 
             void add_conn(std::shared_ptr<conn_ctx> conn);
-            void handle_io(conn_ctx *conn, std::unique_ptr<sockpp::io_ctx> io);
+            void remove_conn(sockpp::socket_t conn_handle);
+
+            void handle_rx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io);
+            void handle_tx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io);
             void handle_close(conn_ctx *conn);
-            void validate(req *const req);
-            
     };
 
 }

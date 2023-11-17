@@ -1,25 +1,25 @@
-%{#include <httparser/http_req.h>
+%{#include <http/http_msg.h>
 %}
 struct http_kvp {
     const char* key;
     int value;
 };
 %%
-GET, httparser::get
-POST, httparser::post
-OPTIONS, httparser::options
-HEAD, httparser::head
-PUT, httparser::put
-DELETE, httparser::delete
-TRACE, httparser::trace
-CONNECT, httparser::connect
-EXTENSION, httparser::extension
-keep-alive, httparser::keep_alive
-close, httparser::close
-chunked, httparser::chunked
-identity, httparser::identity
-gzip, httparser::gzip
-compress, httparser::compress
-deflate, httparser::deflate
-text/html, httparser::html
-text/json, httparser::json
+GET, http::get
+POST, http::post
+OPTIONS, http::options
+HEAD, http::head
+PUT, http::put
+DELETE, http::delete
+TRACE, http::trace
+CONNECT, http::connect
+EXTENSION, http::extension
+keep-alive, http::keep_alive
+close, http::close
+chunked, http::chunked
+identity, http::identity
+gzip, http::gzip
+compress, http::compress
+deflate, http::deflate
+text/html, http::html
+text/json, http::json

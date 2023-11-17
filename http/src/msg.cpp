@@ -20,4 +20,9 @@ namespace http {
         std::cout << std::endl;
     }
 
+    bool req::has_err(void) const
+    {
+        return err != nullptr;
+    }
+
 }

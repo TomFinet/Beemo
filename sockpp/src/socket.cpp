@@ -6,10 +6,7 @@ namespace sockpp {
 
     socket::~socket()
     {
-        std::cout << "~socket()" << std::endl;
-        if (handle_ != INVALID_SOCKET) {
-            closesocket(handle_);
-        }
+        close();
     }
 
     void socket::create_handle(int family, int type, int protocol)
@@ -58,6 +55,11 @@ namespace sockpp {
     {
         unsigned long nbytes = 0;
         unsigned long flags = 0;
+        /* will complete when either:
+            - error occurs
+            - connection is closed
+            - buffer is completely filled.
+        if the buffer is completely filled before the connection is closed, then we need to process the data so far and */
         int err = ::WSARecv(handle_, &io->buf_desc, buf_num, &nbytes, &flags, (OVERLAPPED*)io, nullptr);
         if (err == SOCKET_ERROR && (ERROR_IO_PENDING != get_last_error())) {
             delete io;
@@ -77,9 +79,24 @@ namespace sockpp {
         }
     }
 
+    void socket::close_tx(void)
+    {
+        if (handle_ == INVALID_SOCKET) {
+            return;
+        }
+
+        int err = ::shutdown(handle_, SD_SEND);
+        if (err == SOCKET_ERROR) {
+            throw std::runtime_error("Failed to close the send end of the connection.");
+        }
+    }
+
+
     void socket::close(void)
     {
-        ::closesocket(handle_);
+        if (handle_ != INVALID_SOCKET) {
+            ::closesocket(handle_);
+        }
     }
 
     socket_t socket::handle(void)
