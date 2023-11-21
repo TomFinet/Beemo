@@ -18,4 +18,12 @@ part of their representation.
 Server must support chunked transfer encoding.
 We will also support gzip encoding by means of an external library.
 
+When we detect an error in the http message, we have to read in the rest of the message,
+with a do nothing parse, and once done, return. That way when we are done with the
+erroneous message we can cleanly start reading the next.
 
+How to know when erroneous message ends? Maybe when the next request line is encountered.
+Actually, we can't use that since it may be part of the payload data. The server should
+simply close the connection after sending a 400 bad request.
+
+Today, we focus on parsing the message body from content-length and transfer-encoding.

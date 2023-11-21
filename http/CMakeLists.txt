@@ -1,6 +1,7 @@
 set(SRCS
     src/http_parser.cpp
     src/http_semantics.cpp
+    src/http_encoding.cpp
     src/http_err.cpp
     src/msg.cpp
     src/server.cpp
@@ -10,6 +11,7 @@ add_library(http STATIC ${SRCS})
 target_link_libraries(http 
     wsock32
     ws2_32
+    utils
     sockpp
     threadpool
     uri

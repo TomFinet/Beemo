@@ -1,4 +1,4 @@
-%{#include <http/http_msg.h>
+%{#include <http/msg.h>
 %}
 struct http_kvp {
     const char* key;
@@ -10,7 +10,7 @@ POST, http::post
 OPTIONS, http::options
 HEAD, http::head
 PUT, http::put
-DELETE, http::delete
+DELETE, http::del
 TRACE, http::trace
 CONNECT, http::connect
 EXTENSION, http::extension
@@ -21,5 +21,8 @@ identity, http::identity
 gzip, http::gzip
 compress, http::compress
 deflate, http::deflate
-text/html, http::html
-text/json, http::json
+text, http::text
+application, http::application
+json, http::json
+html, http::html
+utf-8, http::utf8

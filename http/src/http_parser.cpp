@@ -1,16 +1,9 @@
-#include <string>
-#include <stdexcept>
-#include <ranges>
-#include <algorithm>
+#include <http/http_parser.h>
+#include <http/http_encoding.h>
 
 #include <uri/uri_parser.h>
 
-#include <http/http_err.h>
-#include <http/http_parser.h>
-#include <http/keyword_map.h>
-#include <http/msg.h>
-
-#include <utils/parsing.h>
+#include <stdexcept>
 
 
 namespace
@@ -23,101 +16,9 @@ namespace
     constexpr int version_major_start = 5;
     constexpr int version_minor_start = 7;
 
-    constexpr auto &content_length = "content-length";
-    constexpr auto &transfer_encoding = "transfer-encoding";
+    /* maps encoding_t to the corresponding encoding class. can this be constexpr or const. */
+    const http::encoding::encoded encoding_map[2] = { http::encoding::encoded(), http::encoding::chunked() };
 
-    int keyword_val(std::string_view keyword)
-    {
-        std::string keyword_str(keyword);
-        struct http_kvp *kvp = http_keyword_map::in_word_set(keyword_str.c_str(),
-            static_cast<unsigned int>(keyword.size()));
-
-        if (kvp == nullptr) {
-            return 0;
-        } 
-        return kvp->value;
-    }
-
-    std::string lowercase_str(std::string_view s)
-    {
-        auto lowered = std::views::transform(s, std::tolower); 
-        return std::string(lowered.begin(), lowered.end());
-    }
-    
-    /* once we encounter an error, we want to read up to the end of the request.
-    so that we flush the bad request out of our rx buffers. */
-    void parse_to_req_end(void)
-    {
-
-    }
-
-    void set_req_err(http::req *const req, const err_handler *const err_handler)
-    {
-        if (!req->has_err()) {
-            req->err = err_handler;
-            parse_to_req_end();
-        }
-    }
-
-    void parse_transfer_encoding(struct http::req *const req)
-    {
-        if (!req->fields.contains(transfer_encoding)) {
-            return;
-        }
-
-        std::string encodings = req->fields[transfer_encoding];
-
-        for (std::string::const_iterator it = encodings.begin(); it != encodings.end();) {
-
-            std::string::const_iterator start = it;
-            while (it != encodings.end() && *it != ',') {
-                it++;
-            }
-            std::string::const_iterator end = it;
-
-            if (start == end) {
-                goto err_response;
-            }
-
-            std::string encoding_str(start, end);
-            http::encoding_t encoding = static_cast<http::encoding_t>(keyword_val(encoding_str));
-            if (encoding == http::encoding_invalid) {
-                goto err_response;
-            }
-            req->transfer_encodings.push(encoding);
-            if (encoding == http::chunked && it != encodings.end()) {
-                goto err_response;
-            }
-
-            if (end != encodings.end()) {
-                it = end + 1;
-                if (end + 1 != encodings.end() && *(end + 1) == space) {
-                    it++;
-                }
-            }
-        }
-        return;
-
-    err_response:
-        req->err = &http::bad_req_handler;
-    }
-
-    void parse_content_len(struct http::req *const req)
-    {
-        if (!req->fields.contains(content_length) || req->fields.contains(transfer_encoding)) {
-            return;
-        }
-
-        std::string_view content_len_view {req->fields[content_length]}; 
-        utils::parse_pattern(content_len_view.begin(), content_len_view.end(), std::isdigit);
-        std::string content_len {content_len_view};
-        req->content_len = std::stoi(content_len);
-    }
-
-    void parse_connection(struct http::req *const req)
-    {
-        // parse the connection field. connection is kept alive by default, unless the connection: close is provided here.
-    }
 }
 
 
@@ -136,7 +37,7 @@ namespace http
         if (req->parse_state == start_line) {
             req_line_end = raw_req.find(crlf);
             if (req_line_end == std::string_view::npos) {
-                set_req_err(req, &bad_req_handler);
+                goto err_response;
             }
 
             req_line = {raw_req.begin(), raw_req.begin() + req_line_end}; 
@@ -144,7 +45,7 @@ namespace http
             parse_req_line(req_line, req); 
         }
 
-        while (req->parse_state == headers) {
+        while (req->parse_state == parse_state_t::headers && !req->has_err()) {
             line_end = raw_req.find(crlf, line_start);
 
             if (line_end == std::string_view::npos) {
@@ -171,9 +72,6 @@ namespace http
 
     err_response:
         req->err = &bad_req_handler;
-        goto ret;
-    err_close:
-        req->err = &close_handler;
     ret:
         return parsed_up_to;
    }
@@ -193,7 +91,7 @@ namespace http
         if (method_end == std::string_view::npos) {
             goto err_response;
         }
-        req->method = static_cast<method_t>(keyword_val(req_line.substr(0, method_end)));
+        req->method = static_cast<method_t>(http_keyword_map::keyword_val(req_line.substr(0, method_end)));
         if (req->method == method_invalid) {
             goto err_response;
         }
@@ -264,7 +162,7 @@ namespace http
         if (field_name_end == std::string_view::npos) {
             goto err_response;
         }
-        field_name = lowercase_str(field_line.substr(0, field_name_end));
+        field_name = utils::lowercase_str(field_line.substr(0, field_name_end));
 
         if (req->fields.contains(field_name)) {
             goto err_response;
@@ -279,7 +177,7 @@ namespace http
         req->fields[field_name] = field_value_view;
 
         if (field_name == host_header) {
-            parse_field_host(field_value_view, req);
+            parse_host(field_value_view, req);
         }
         return;
 
@@ -288,7 +186,7 @@ namespace http
         req->err = &bad_req_handler;
     }
 
-    void parse_field_host(std::string_view host_val, req *const req)
+    void parse_host(std::string_view host_val, req *const req)
     {
         switch (req->target_form) {
             case http::origin:
@@ -305,53 +203,136 @@ namespace http
                 break;
         }
     }
+    
+    void parse_content_len(struct req *const req)
+    {
+        if (!req->fields.contains(content_length_token) || req->fields.contains(transfer_encoding_token)) {
+            return;
+        }
+
+        std::string_view content_len_view {req->fields[content_length_token]}; 
+        bool is_valid = utils::parse_pattern(content_len_view.begin(), content_len_view.end(), std::isdigit);
+        if (content_len_view.empty() || !is_valid) {
+            req->err = &bad_req_handler;
+            return;
+        }
+
+        std::string content_len {content_len_view};
+        req->content_len = std::stoi(content_len);
+    }
+
+    /* content-type defines the media type and format used for the
+    message's representation data (content, or whatever uri points to).
+    It may also specify the character encoding used. */
+    void parse_content_type(req *const req)
+    {
+        std::string_view content_type;
+        std::string_view media_type; 
+        std::string_view media_subtype;
+        std::string_view charset;
+        size_t media_type_end; 
+        size_t media_subtype_end;
+
+        if (!req->fields.contains(content_type_token)) {
+            req->fields[content_type_token] = default_content_type;
+        }
+
+        content_type = req->fields[content_type_token];
+
+        media_type_end = content_type.find('/');
+        media_type = content_type.substr(0, media_type_end);
+        req->media_type = static_cast<media_type_t>(http_keyword_map::keyword_val(media_type));
+        if (req->media_type == media_type_invalid) {
+            req->err = &bad_req_handler;
+        }
+
+        media_subtype_end = content_type.find(';', media_type_end);
+        media_subtype = content_type.substr(media_type_end + 1, media_subtype_end - media_type_end);
+        req->media_subtype = static_cast<media_subtype_t>(http_keyword_map::keyword_val(media_subtype));
+        if (req->media_subtype == media_subtype_invalid) {
+            req->err = &bad_req_handler; /* should probably be an unimplemented response msg. */
+        }
+
+        if (media_subtype_end == std::string_view::npos) {
+            return;
+        }
+
+        charset = content_type.substr(media_subtype_end + 1);
+        /* TODO: parse charset_token parameter. Should have a generic parameter parsing method in utils which spits out the param name and value. */
+    }
+
+    void parse_connection(struct req *const req)
+    {
+        // parse the connection field. connection is kept alive by default, unless the connection: close is provided here.
+    }
 
     /* The request headers have been parsed and validated by the time this is called.
     The content string view is not guaranteed to encompass all the
     content (the rx buffer may be smaller than rx data, transport receive may have
-    notified us of rx packets before all where received.)*/
-    void parse_content(size_t content_start_idx, req *const req)
+    notified us of rx packets before all where received.) */
+    void parse_content(std::string_view raw_content, req *const req)
     {
-        parse_transfer_encoding(req);
+        /* TODO: raw_content is passed in wrong. */
+        std::cout << "parsing the content: " << raw_content << std::endl;
+        /* codings applied for transfer. */
+        req->transfer_encodings = parse_field_list<encoding_t>(req, transfer_encoding_token, &not_impl_handler);
+        /* codings listed here are characteristic of the representation. all other metadata about the represenation is about the coded form. */
+        req->content_encodings = parse_field_list<encoding_t>(req, content_encoding_token, &bad_req_handler);
+
         parse_content_len(req);
+        parse_content_type(req);
 
         if (req->has_err()) {
+            std::cout << "we have a problem" << std::endl;
             return;
         }
 
-        if (req->fields.contains(transfer_encoding)) {
+        bool has_transfer_encodings = !req->transfer_encodings.empty();
+        bool has_content_length = req->fields.contains(content_length_token);
+        std::cout << "has transfer encodings: " << has_transfer_encodings << std::endl;
+        std::cout << "has content length: " << has_content_length << std::endl;
 
-            if (req->fields.contains(content_length)) {
-                goto bad_req; // cannot have content-length and transfer-encoding.
+        if (has_transfer_encodings) {
+            if (has_content_length) {
+                goto bad_req; /* cannot have content-length and transfer-encoding. */
             }
 
-            while (!req->transfer_encodings.empty()) {
-                /* if encoding was a polymorphic class, we could simplify the code here to:
-                    encoding->decode();
-                */
-                encoding_t encoding = req->transfer_encodings.front();
-                req->transfer_encodings.pop();
-
-                switch (encoding) {
-                    case gzip:
-                        break;
-                    case chunked:
-                        /* chunked-size CRLF
-                           chunked-data CRLF */
-                        break;
+            for (encoding_t enc : req->transfer_encodings) {
+                std::cout << "encoding value: " << enc << std::endl;
+                bool fully_decoded = encoding_map[static_cast<unsigned int>(enc)].decode(raw_content, req); 
+                std::cout << "is fully decoded: " << fully_decoded << std::endl;
+                if (!fully_decoded) {
+                    std::cout << "incomplete content, making rx request." << std::endl;
+                    goto incomplete_content;
                 }
             }
+        }
+        else if (has_content_length) {
 
         }
-        else if (req->fields.contains(content_length)) {
-            // for (auto it = content.begin(); it != std::min(content.begin() + req->content_len, content.end()); it++) 
+        else {
+            goto len_required;
         }
+        
+        /* TODO: should be applied to req->content. */
+        /*for (encoding_t enc : req->content_encodings) {
+            encoding::encoding &enc_class = encoding_class(enc);
+            bool fully_decoded = enc_class.decode(raw_content, req); 
+            if (!fully_decoded) {
+                goto incomplete_content;
+            }
+        }*/
+
         req->parse_state = complete;
+
+    incomplete_content:
         return;
-    
     bad_req:
-        std::cout << "content error" << std::endl;
         req->err = &bad_req_handler;
+        return;
+    len_required:     
+        req->err = &len_required_handler;
+        return;
     }
 
 }

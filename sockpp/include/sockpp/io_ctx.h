@@ -7,7 +7,7 @@
 
 namespace
 {
-    constexpr int max_rx_len = 150;
+    constexpr int max_rx_len = 400;
     constexpr int init_rx_len = 1000;
 }
 

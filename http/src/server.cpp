@@ -44,7 +44,7 @@ namespace http
             io_workers->submit([this]()
             {
                 try {
-                    this->io_queue->listen();
+                    this->io_queue->dequeue();
                 }
                 catch (std::exception &ex) {
                     std::cout << ex.what() << std::endl;
@@ -75,18 +75,18 @@ namespace http
     /* Responsible for handling transport layer rx completion. */
     void server::handle_rx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
     {
+        std::cout << io->buf << std::endl;
+
         std::shared_ptr<conn_ctx> conn = connections[conn_ptr->skt->handle()];
 
         conn->reassembly_buf += std::string(io->buf, io->buf_desc.len);
 
-        if (conn->request->parse_state != content) {
+        if (conn->request->parse_state != content && conn->request->parse_state != chunk_trailers) {
             conn->parsed_to_idx = parse_headers(conn->reassembly_buf, conn->parsed_to_idx, conn->request.get());
-            std::cout << conn->parsed_to_idx << std::endl;
         }
 
-        conn->request->print();
-
-        if (conn->request->parse_state != content) {
+        if (conn->request->parse_state != content && conn->request->parse_state != chunk_trailers
+            && !conn->request->has_err()) {
             /* We have not fully parsed the headers ==> issue an rx req for them. */
             conn->rx();
             return;
@@ -94,22 +94,26 @@ namespace http
 
         /* raw_content may not be the full content, we may need to make a new recv request to read all the content,
         if what we have seen so far is error free. */
-        std::cout << conn->parsed_to_idx << std::endl;
-        parse_content(conn->parsed_to_idx, conn->request.get());
-        if (conn->request->parse_state != complete) {
-            /* issue a new recv request to get the rest of the message content. */
-            conn->rx();
-            return;
+        if (!conn->request->has_err()) {
+            std::string_view content_start = conn->reassembly_buf.substr(conn->parsed_to_idx);
+            parse_content(content_start, conn->request.get());
+            if (conn->request->parse_state != complete && !conn->request->has_err()) {
+                /* issue a new recv request to get the rest of the message content. */
+                conn->rx();
+                return;
+            }
         }
 
-        /* important to parse the full message before responding with errors
-        to get msg out of io queue. */
         if (conn->request->has_err()) {
             conn->request->err->handle(conn);
+            /* add the linger option, so that we don't get seg faults. */
+            remove_conn(conn->skt->handle());
             return;
         }
 
-        conn->reset_req();
+        conn->reset_for_next();
+        // this is where we need to hook in controller to process struct req, and
+        // build the response.
         conn->tx("HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHowdy cowboy!");
     }
     

@@ -6,9 +6,9 @@
 
 #include <uri/uri.h>
 
-namespace http {
+namespace http
+{
 
-    /* RFC 9112 sect 2.3 */
     struct version {
         short major;
         short minor;
@@ -22,14 +22,16 @@ namespace http {
 
     enum conn_t { conn_invalid, keep_alive, close };
 
-    enum encoding_t { encoding_invalid, chunked, identity, gzip, compress, deflate };
+    enum media_type_t { media_type_invalid, application, text };
+    enum media_subtype_t { media_subtype_invalid, html, json };
+    enum encoding_t { invalid_encoding, chunked, identity, gzip, compress, deflate };
 
-    enum content_type_t { content_type_invalid, html, json };
+    enum charset_t { charset_invalid, utf8 };
 
     enum target_form_t { absolute, authority, asterik, origin };
     
     /* Indicates what stage of message parsing we are at. */
-    enum parse_state_t { start_line, headers, content, complete };
+    enum parse_state_t { start_line, headers, content, chunk_trailers, complete };
 
     constexpr auto &host_header = "host";
 
@@ -54,20 +56,29 @@ namespace http {
     constexpr auto &not_implemented = "501";
     constexpr auto &bad_gateway = "502";
     constexpr auto &service_unavailable = "503";
+
+    constexpr auto &content_length_token = "content-length";
+    constexpr auto &transfer_encoding_token = "transfer-encoding";
+    constexpr auto &content_type_token = "content-type";
+    constexpr auto &content_encoding_token = "content-encoding";
+    constexpr auto &charset_token = "charset";
     
-    /* forward declaration to break circular dependency. */
+    /* this is a server default and not a message constant, should be moved to server. */
+    constexpr auto &default_content_type = "application/octet-stream";
+
+    /* forward declarations to break circular dependency. */
     class err_handler;
 
-    /* A request is not necessarily fully sent in a single TCP, we need to account for this.
+    /* A request is not necessarily fully sent in a single transport packet, we need to account for this.
     If we have not hit the double CLRF yet, then we are still reading header fields.*/
     struct req {
 
         req() : parse_state(start_line), err(nullptr), content_len(0) { }
 
-        /* metadata */
+        /* metadata to aid with request parsing. */
         target_form_t target_form;
-        err_handler *err;
         parse_state_t parse_state;
+        err_handler *err;
 
         /* request line */
         struct version version;
@@ -78,9 +89,16 @@ namespace http {
         std::unordered_map<std::string, std::string> fields;
 
         /* parsed fields */
+        /* when content-length is specified in req, this takes its value.
+        if we use chunked encoding, this keeps track of the number of bytes of content
+        we have decoded so far. */
         unsigned int content_len;
-        /* in order of preference. */
-        std::queue<encoding_t> transfer_encodings;
+        media_type_t media_type;
+        media_subtype_t media_subtype;
+        charset_t charset;
+
+        std::vector<encoding_t> content_encodings;
+        std::vector<encoding_t> transfer_encodings;
 
         /* body */
         std::string content;

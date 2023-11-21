@@ -31,8 +31,8 @@ include_directories(
     ${CMAKE_SOURCE_DIR}/utils/include/
 )
 
+add_subdirectory(utils)
 add_subdirectory(threadpool)
 add_subdirectory(sockpp)
 add_subdirectory(uri)
 add_subdirectory(http)
-add_subdirectory(utils)

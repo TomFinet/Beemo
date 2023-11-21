@@ -35,4 +35,6 @@ namespace http
     /* to be used as singletons globally, hence the external linkage. */ 
     extern err_conn_close_handler close_handler;
     extern err_response_handler bad_req_handler;
+    extern err_response_handler not_impl_handler;
+    extern err_response_handler len_required_handler;
 }

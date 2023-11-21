@@ -62,7 +62,7 @@ namespace sockpp
             }
 
             /* listens for queued io, depending on the context calls on_rx or on_tx. */
-            void listen(void)
+            void dequeue(void)
             {
                 unsigned long io_size = 0;
                 key_t *key = nullptr;

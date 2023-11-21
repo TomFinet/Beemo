@@ -51,21 +51,22 @@ namespace http
 
         /* when we have parsed a request or encountered an error,
         we call reset_req to start the next request fresh. */
-        void reset_req(void)
+        void reset_for_next(void)
         {
             reassembly_buf.clear();
             reassembly_buf.shrink_to_fit();
 
             parsed_to_idx = 0;
 
+            /* maybe just swap request with a new request. */
             request->fields.clear();
             request->content.clear();
             request->content.shrink_to_fit();
             request->err = nullptr;
             request->uri = {0};
             request->parse_state = start_line;
-            std::queue<encoding_t> empty_encoding_queue;
-            std::swap(request->transfer_encodings, empty_encoding_queue);
+            std::vector<encoding_t> empty_encoding_list;
+            std::swap(request->transfer_encodings, empty_encoding_list);
         }
 
         void close_tx(void)
