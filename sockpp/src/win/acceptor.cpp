@@ -1,6 +1,8 @@
 #include <sockpp/acceptor.h>
 
-namespace sockpp {
+
+namespace sockpp
+{
 
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog)
     {
@@ -16,11 +18,6 @@ namespace sockpp {
 
         int zero = 0;
         sock_.set_options(SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&zero), sizeof(zero));
-    }
-
-    socket_t acceptor::accept(void)
-    {
-        return sock_.accept();
     }
 
 }

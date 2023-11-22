@@ -1,17 +1,13 @@
 #pragma once
 
-#include <winsock2.h>
-#include <ws2tcpip.h>
-
 #include <stdexcept>
 #include <memory>
 
+#include <sockpp/platform.h>
 #include <sockpp/io_ctx.h>
 
 
 namespace sockpp {
-
-    using socket_t = SOCKET;
 
     class socket {
 
@@ -22,22 +18,30 @@ namespace sockpp {
 
     public:
 
-        socket() : handle_(INVALID_SOCKET), last_error_(0) {}
+        socket() : handle_(invalid_handle), last_error_(0) {}
         socket(socket_t handle) : handle_(handle), last_error_(0) {}
-        ~socket();
+        
+        ~socket()
+        {
+            close();
+        }
 
         static void startup(void)
         {
+            #ifdef WIN32
             WSADATA wsaData;
-            int err = ::WSAStartup(MAKEWORD(2, 2), &wsaData);
+            int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
             if (err != 0) {
                 throw std::runtime_error("Failed to initialise the Winsock dll. Quitting...");
             }
+            #endif
         }
 
         static void cleanup(void)
         {
-            ::WSACleanup();
+            #ifdef WIN32
+            WSACleanup();
+            #endif
         } 
 
         /**
@@ -56,30 +60,54 @@ namespace sockpp {
         * @param nbytes Size in bytes of local address structure.
         *
         */
-        void bind(const struct sockaddr *addr, int nbytes);
+        void bind(const struct sockaddr *addr, unsigned int nbytes)
+        {
+            int err = ::bind(handle_, addr, nbytes);
+            if (err == socket_error) {
+                throw std::runtime_error("Failed to bind an address to the socket handle.");
+            }
+        }
 
         /**
         * Changes socket state to listening on the bound address. 
         */
-        void listen(unsigned int backlog);
-
-        void set_options(int level, int optname, const char *optval, int oplen);
-
-        /**
-        * Blocking call.
-        */
+        void listen(unsigned int backlog)
+        {
+            int err = ::listen(handle_, backlog);
+            if (err == socket_error) {
+                throw std::runtime_error("Failed to transition socket into a listening state.");
+            }
+        }
+        
         socket_t accept(void);
+
+        void set_options(int level, int optname, const char *optval, int oplen)
+        {
+            int err = setsockopt(handle_, level, optname, optval, oplen);
+            if (err == socket_error) {
+                throw std::runtime_error("Failed to set socket options.");
+            }
+        }
 
         void rx(io_ctx *const io, const int buf_num);
         void tx(io_ctx *const io, const int buf_num);
 
-        void close_tx(void);
-        void close(void);
+        socket_t handle(void)
+        {
+            return handle_;
+        }
 
-        socket_t handle(void);
-
-        void address(struct sockaddr *name, int *namelen);
+        void address(struct sockaddr *name, unsigned int *namelen)
+        {
+            int err = getsockname(handle_, name, namelen);
+            if (err == socket_error) {
+                throw std::runtime_error("Failed to get the socket address.");
+            }
+        }
 
         int get_last_error(void);
+
+        void close_tx(void);
+        void close(void);
     };
 }

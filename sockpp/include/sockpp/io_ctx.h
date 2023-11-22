@@ -1,18 +1,14 @@
 #pragma once
 
+#include <cstddef>
 #include <string>
-#include <queue>
+#include <string_view>
 
-/* Holds all the context needed to maintain a connection with a remote socket. */
-
-namespace
-{
-    constexpr int max_rx_len = 150;
-    constexpr int init_rx_len = 1000;
-}
 
 namespace sockpp
 {
+    constexpr int max_rx_len = 150;
+
     namespace io
     {
         enum type { rx, tx };
@@ -21,8 +17,10 @@ namespace sockpp
     /* Provides communication from the initialisation of overlapped IO op to its completion. */
     struct io_ctx {
 
+    #ifdef WIN32
         WSAOVERLAPPED overlapped;
         WSABUF buf_desc;
+    #endif
 
         char buf[max_rx_len];
 
@@ -35,26 +33,13 @@ namespace sockpp
 
         io::type type;
 
-        io_ctx(io::type type)
-            : buf{0}, type(type), bytes_tx(0), bytes_to_tx(0), bytes_rx(0), overlapped{0}
-        {
-            buf_desc.buf = buf;
-            buf_desc.len = max_rx_len;
-        }
-
+        io_ctx(io::type type);
         ~io_ctx() {}
 
         /* Writes the data pointed to by the string view into the io buffer.
         Also updates the buffer descriptors and metadata. */
-        void write_buf(std::string_view data)
-        {
-            strncpy_s(buf, data.data(), data.size());
-            buf_desc.len = static_cast<unsigned long>(data.size());
-            bytes_to_tx = data.size();
-            bytes_tx = 0;
-            bytes_rx = 0;
-        }
-
+        /* TODO: handle case where data does not fit the buffer. */
+        void write_buf(std::string_view data);
     };
     
 }

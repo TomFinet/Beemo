@@ -4,32 +4,33 @@
 
 #include <sockpp/socket.h>
 
-namespace sockpp {
+namespace sockpp
+{
 
-/**
- * Used by servers to accept connections.
- */
-class acceptor {
+    class acceptor {
 
-    private:
+        private:
 
-        socket sock_;
+            socket sock_;
 
-    public:
+        public:
 
-        acceptor() { }
-        ~acceptor() { }
+            acceptor() { }
+            ~acceptor() { }
 
-        /**
-         * Creates the acceptor's socket handle, binds @addr to it, and
-         * changes the socket's state to listening.
-         */
-        void open(const std::string &ip, const int host, const unsigned int backlog);
+            /**
+             * Creates the acceptor's socket handle, binds @addr to it, and
+             * changes the socket's state to listening.
+             */
+            void open(const std::string &ip, const int host, const unsigned int backlog);
 
-        /**
-         * Accepts incoming connections.
-         */
-        socket_t accept(); 
-};
+            /**
+             * Accepts incoming connections.
+             */
+            socket_t accept()
+            {
+                return sock_.accept();
+            }
+    };
 
 }

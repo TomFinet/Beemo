@@ -21,3 +21,25 @@ Request handling threads should call the GetQueuedCompletionStatus function to r
 IOCP queue.
 We only want one IOCP and X worker threads.
 
+---------------------------------------------
+
+LINUX: epoll? great guide: https://copyconstruct.medium.com/the-method-to-epolls-madness-d9d2d6378642
+
+stands for event poll.
+purpose: multiplex I/O associated with file descriptors.
+
+it is in fact a data-structure.
+create the ds using epoll_create(int size) from sys/epoll.h
+size is number of fd to multiplex, but is ignored because
+it now grows dynamically.
+
+can add to epoll ds by calling epoll_ctl(...)
+
+when we accept a new connection, we want to add the socket fd
+to epoll instance.
+
+we can use this function to specify which events we want to
+monitor, e.g. data rx'ed on fd => use EPOLLIN
+
+a thread can be notified of events that happened on a monitored fd by calling epoll_wait(epfd, event_list, max_events, timeout)
+
