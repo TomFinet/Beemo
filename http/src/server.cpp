@@ -1,6 +1,5 @@
 #include <http/server.h>
 #include <http/http_parser.h>
-#include <http/http_semantics.h>
 #include <http/http_err.h>
 
 #include <sockpp/socket.h>
@@ -55,7 +54,9 @@ namespace http
         /* start listening for incoming connections. */
         acc.open(listening_ip, listening_port, max_backlog);
 
-        while (true) {
+        /* other threads may delete connections, but can never create new ones.
+        as such reading the size() is fine to do without synchronisation. */
+        while (connections.size() < config_.max_concurrent_connections) {
             sockpp::socket_t handle = acc.accept();
             std::unique_ptr<sockpp::socket> skt = std::make_unique<sockpp::socket>(handle);
 
@@ -75,11 +76,10 @@ namespace http
     /* Responsible for handling transport layer rx completion. */
     void server::handle_rx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
     {
-        std::cout << io->buf << std::endl;
-
         std::shared_ptr<conn_ctx> conn = connections[conn_ptr->skt->handle()];
 
-        conn->reassembly_buf += std::string(io->buf, io->buf_desc.len);
+        conn->reassembly_buf += std::string(io->buf, io->bytes_rx);
+        std::cout << conn->reassembly_buf << std::endl;
 
         if (conn->request->parse_state != content && conn->request->parse_state != chunk_trailers) {
             conn->parsed_to_idx = parse_headers(conn->reassembly_buf, conn->parsed_to_idx, conn->request.get());
@@ -95,8 +95,11 @@ namespace http
         /* raw_content may not be the full content, we may need to make a new recv request to read all the content,
         if what we have seen so far is error free. */
         if (!conn->request->has_err()) {
-            std::string_view content_start = conn->reassembly_buf.substr(conn->parsed_to_idx);
-            parse_content(content_start, conn->request.get());
+
+            /* we have parsed the headers, let's check that what we have so far is sane. */
+            
+
+            parse_content(conn->reassembly_buf.substr(conn->parsed_to_idx), conn->request.get());
             if (conn->request->parse_state != complete && !conn->request->has_err()) {
                 /* issue a new recv request to get the rest of the message content. */
                 conn->rx();
@@ -110,6 +113,7 @@ namespace http
             remove_conn(conn->skt->handle());
             return;
         }
+
 
         conn->reset_for_next();
         // this is where we need to hook in controller to process struct req, and

@@ -9,6 +9,7 @@
 
 #include <http/msg.h>
 #include <http/conn_ctx.h>
+#include <http/config.h>
 
 #include <sockpp/io_ctx.h>
 #include <sockpp/acceptor.h>
@@ -37,6 +38,9 @@ namespace http {
 
         private:
 
+            struct config config_;
+
+            /* TODO: replace these with the config struct above. */
             std::string default_scheme_;
             int default_port_;
 

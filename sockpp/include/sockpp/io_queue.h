@@ -95,6 +95,7 @@ namespace sockpp
                     io_ctx.reset(io);
 
                     if (io->type == io::type::rx) {
+                        io->bytes_rx = io_size;
                         on_rx(key, std::move(io_ctx));
                     }
                     else if (io->type == io::type::tx) {

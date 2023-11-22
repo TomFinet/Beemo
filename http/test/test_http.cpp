@@ -82,12 +82,17 @@ TEST(HttpTest, ContentType)
 TEST(HttpTest, ContentLength)
 {
     http::req req;
-    req.fields["content-length"] = "100";    
+    req.fields["content-length"] = "10";    
     http::parse_content_len(&req);
     
-    ASSERT_EQ(req.content_len, 100);
+    ASSERT_EQ(req.content_len, 10);
+    
+    http::parse_content("howdy ho!!", &req);
+
+    ASSERT_EQ(req.content, "howdy ho!!");
 
     req.fields["content-length"] = "-1";
+    http::parse_content_len(&req);
 
     ASSERT_EQ(req.err, &http::bad_req_handler);
 }
@@ -136,16 +141,18 @@ TEST(HttpTest, TransferEncodings)
 TEST(HttpTest, Chunked)
 {
     std::string_view content =
-        "12\r\n"
+        "c\r\n"
         "space marine\r\n"
-        "10\r\n"
+        "a\r\n"
         " damage: 5\r\n"
-        "0\r\n";
+        "0\r\n"
+        "\r\n";
 
     std::string_view chunked_post =
         "POST /add HTTP/1.1\r\n"
         "Connection: keep-alive\r\n"
         "Transfer-Encoding: chunked\r\n"
+        "Content-Type: text/json\r\n"
         "Host: www.miniwargamming.com\r\n"
         "\r\n";
 

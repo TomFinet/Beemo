@@ -23,7 +23,7 @@ namespace http
     enum conn_t { conn_invalid, keep_alive, close };
 
     enum media_type_t { media_type_invalid, application, text };
-    enum media_subtype_t { media_subtype_invalid, html, json };
+    enum media_subtype_t { media_subtype_invalid, html, json, x_www_form_urlencoded, octet_stream };
     enum encoding_t { invalid_encoding, chunked, identity, gzip, compress, deflate };
 
     enum charset_t { charset_invalid, utf8 };
@@ -62,9 +62,11 @@ namespace http
     constexpr auto &content_type_token = "content-type";
     constexpr auto &content_encoding_token = "content-encoding";
     constexpr auto &charset_token = "charset";
+
+    constexpr int status_code_len = 4;
     
     /* this is a server default and not a message constant, should be moved to server. */
-    constexpr auto &default_content_type = "application/octet-stream";
+    constexpr auto &default_content_type = "application/json";
 
     /* forward declarations to break circular dependency. */
     class err_handler;
@@ -73,7 +75,7 @@ namespace http
     If we have not hit the double CLRF yet, then we are still reading header fields.*/
     struct req {
 
-        req() : parse_state(start_line), err(nullptr), content_len(0) { }
+        req() : parse_state(start_line), err(nullptr), content_len(0), chunked_content_len(0) { }
 
         /* metadata to aid with request parsing. */
         target_form_t target_form;
@@ -92,6 +94,7 @@ namespace http
         /* when content-length is specified in req, this takes its value.
         if we use chunked encoding, this keeps track of the number of bytes of content
         we have decoded so far. */
+        unsigned int chunked_content_len;
         unsigned int content_len;
         media_type_t media_type;
         media_subtype_t media_subtype;
@@ -106,8 +109,6 @@ namespace http
         void print(void) const;
         bool has_err(void) const;
     };
-
-    constexpr int status_code_len = 4;
 
     struct response {
 

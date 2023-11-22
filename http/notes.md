@@ -27,3 +27,12 @@ Actually, we can't use that since it may be part of the payload data. The server
 simply close the connection after sending a 400 bad request.
 
 Today, we focus on parsing the message body from content-length and transfer-encoding.
+
+
+---------------------------------------
+
+Today, we want to design and start work on enabling a user of this http server to add custom
+logic to endpoints.
+We also want to implement some checks and semantics for the various http methods.
+
+We probably want a configuration structure. That way we can use it during msg routing and such.

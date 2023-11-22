@@ -1,8 +1,9 @@
 set(SRCS
     src/http_parser.cpp
-    src/http_semantics.cpp
     src/http_encoding.cpp
     src/http_err.cpp
+    src/http_method.cpp
+    src/routing.cpp
     src/msg.cpp
     src/server.cpp
 )

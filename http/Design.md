@@ -51,3 +51,15 @@ of error objects each overriding the handle method. If no error exists, the req 
 
 
 Today: work on transfer-encoding and content-length.
+
+
+How to represent a resource?
+
+First what sorts of resources: anything identified by uri, or pointed to by url.
+- html, js, css
+- images
+- text
+- in memory like a session perhaps.
+
+We do not care really, so long as for each type of resource, we have a way to read/write to it.
+We may also want to specify permissions for a resource type instance.

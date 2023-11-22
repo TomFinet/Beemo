@@ -3,7 +3,7 @@
 
 #include <uri/uri_parser.h>
 
-#include <stdexcept>
+#include <unordered_map>
 
 
 namespace
@@ -16,8 +16,24 @@ namespace
     constexpr int version_major_start = 5;
     constexpr int version_minor_start = 7;
 
-    /* maps encoding_t to the corresponding encoding class. can this be constexpr or const. */
-    const http::encoding::encoded encoding_map[2] = { http::encoding::encoded(), http::encoding::chunked() };
+    /* maps encoding_t to the corresponding encoding class. */
+    const std::unordered_map<http::encoding_t, http::encoding::encoded*> encoding_map
+    {
+        {http::invalid_encoding, new http::encoding::encoded()},
+        {http::chunked, new http::encoding::chunked()},
+        {http::identity, new http::encoding::identity()},
+        {http::gzip, new http::encoding::gzip()},
+        {http::compress, new http::encoding::compress()},
+        {http::deflate, new http::encoding::deflate()}
+    };
+
+    http::encoding::encoded* to_encoding_class(http::encoding_t enc)
+    {
+        if (!encoding_map.contains(enc)) {
+            return encoding_map.at(http::invalid_encoding);
+        }
+        return encoding_map.at(enc);
+    }
 
 }
 
@@ -93,7 +109,7 @@ namespace http
         }
         req->method = static_cast<method_t>(http_keyword_map::keyword_val(req_line.substr(0, method_end)));
         if (req->method == method_invalid) {
-            goto err_response;
+            goto err_not_impl;
         }
 
         req_target_end = req_line.find(space, method_end + 1);
@@ -114,6 +130,9 @@ namespace http
 
     err_response:
         req->err = &bad_req_handler;
+        return;
+    err_not_impl:
+        req->err = &not_impl_handler;
     }
 
     void parse_req_target(std::string_view req_target, req *const req)
@@ -270,10 +289,9 @@ namespace http
     The content string view is not guaranteed to encompass all the
     content (the rx buffer may be smaller than rx data, transport receive may have
     notified us of rx packets before all where received.) */
+    /* TODO: this may be called multiple times due partial requests. We don't want to parse header fields each time. */
     void parse_content(std::string_view raw_content, req *const req)
     {
-        /* TODO: raw_content is passed in wrong. */
-        std::cout << "parsing the content: " << raw_content << std::endl;
         /* codings applied for transfer. */
         req->transfer_encodings = parse_field_list<encoding_t>(req, transfer_encoding_token, &not_impl_handler);
         /* codings listed here are characteristic of the representation. all other metadata about the represenation is about the coded form. */
@@ -289,8 +307,6 @@ namespace http
 
         bool has_transfer_encodings = !req->transfer_encodings.empty();
         bool has_content_length = req->fields.contains(content_length_token);
-        std::cout << "has transfer encodings: " << has_transfer_encodings << std::endl;
-        std::cout << "has content length: " << has_content_length << std::endl;
 
         if (has_transfer_encodings) {
             if (has_content_length) {
@@ -298,9 +314,7 @@ namespace http
             }
 
             for (encoding_t enc : req->transfer_encodings) {
-                std::cout << "encoding value: " << enc << std::endl;
-                bool fully_decoded = encoding_map[static_cast<unsigned int>(enc)].decode(raw_content, req); 
-                std::cout << "is fully decoded: " << fully_decoded << std::endl;
+                bool fully_decoded = to_encoding_class(enc)->decode(raw_content, req); 
                 if (!fully_decoded) {
                     std::cout << "incomplete content, making rx request." << std::endl;
                     goto incomplete_content;
@@ -308,20 +322,18 @@ namespace http
             }
         }
         else if (has_content_length) {
-
+            if (req->content_len > raw_content.size()) {
+                goto incomplete_content;
+            }
+            req->content = raw_content.substr(0, req->content_len);
         }
         else {
             goto len_required;
         }
         
-        /* TODO: should be applied to req->content. */
-        /*for (encoding_t enc : req->content_encodings) {
-            encoding::encoding &enc_class = encoding_class(enc);
-            bool fully_decoded = enc_class.decode(raw_content, req); 
-            if (!fully_decoded) {
-                goto incomplete_content;
-            }
-        }*/
+        for (encoding_t enc : req->content_encodings) {
+            to_encoding_class(enc)->decode(req->content, req); 
+        }
 
         req->parse_state = complete;
 

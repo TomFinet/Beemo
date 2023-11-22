@@ -7,7 +7,7 @@
 
 namespace
 {
-    constexpr int max_rx_len = 400;
+    constexpr int max_rx_len = 150;
     constexpr int init_rx_len = 1000;
 }
 
@@ -30,11 +30,13 @@ namespace sockpp
         size_t bytes_tx;
         /* total number of bytes to send. */
         size_t bytes_to_tx;
+        /* bytes received. */
+        size_t bytes_rx;
 
         io::type type;
 
         io_ctx(io::type type)
-            : buf{0}, type(type), bytes_tx(0), bytes_to_tx(0), overlapped{0}
+            : buf{0}, type(type), bytes_tx(0), bytes_to_tx(0), bytes_rx(0), overlapped{0}
         {
             buf_desc.buf = buf;
             buf_desc.len = max_rx_len;
@@ -50,6 +52,7 @@ namespace sockpp
             buf_desc.len = static_cast<unsigned long>(data.size());
             bytes_to_tx = data.size();
             bytes_tx = 0;
+            bytes_rx = 0;
         }
 
     };
