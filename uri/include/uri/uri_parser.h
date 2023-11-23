@@ -7,7 +7,7 @@ namespace uri
 {
 
     constexpr int no_port = -1;
-    constexpr auto &no_scheme = "";
+    static constexpr auto &no_scheme = "";
     
     constexpr int flag_scheme = 1;
     constexpr int flag_authority = 2;

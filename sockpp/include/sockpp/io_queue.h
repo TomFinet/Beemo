@@ -9,9 +9,7 @@
 #include <functional>
 #include <thread>
 
-#include <winsock2.h>
-#include <Ws2tcpip.h>
-
+#include <sockpp/platform.h>
 #include <sockpp/io_ctx.h>
 #include <sockpp/socket.h>
 

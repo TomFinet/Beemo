@@ -1,5 +1,6 @@
 #include <utils/parsing.h>
 
+#include <cctype>
 #include <ranges>
 #include <algorithm>
 
@@ -8,7 +9,8 @@ namespace utils
 
     std::string lowercase_str(std::string_view s)
     {
-        auto lowered = std::views::transform(s, std::tolower); 
+        auto lowered = std::views::transform(s, [](unsigned char c)
+            { return std::tolower(c); }); 
         return std::string(lowered.begin(), lowered.end());
     }
 

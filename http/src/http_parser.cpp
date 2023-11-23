@@ -230,7 +230,10 @@ namespace http
         }
 
         std::string_view content_len_view {req->fields[content_length_token]}; 
-        bool is_valid = utils::parse_pattern(content_len_view.begin(), content_len_view.end(), std::isdigit);
+        bool is_valid = utils::parse_pattern(content_len_view.begin(), content_len_view.end(), [](unsigned char c)
+        {
+            return std::isdigit(c);
+        });
         if (content_len_view.empty() || !is_valid) {
             req->err = &bad_req_handler;
             return;

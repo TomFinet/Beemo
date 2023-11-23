@@ -8,7 +8,7 @@ namespace sockpp
 
     void io_ctx::write_buf(std::string_view data)
     {
-        strncpy_s(buf, data.data(), data.size());
+        strncpy(buf, data.data(), data.size());
         bytes_to_tx = data.size();
         bytes_tx = 0;
         bytes_rx = 0;

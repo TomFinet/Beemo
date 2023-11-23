@@ -213,7 +213,10 @@ namespace uri
         }
 
         auto version_end = ipvfuture_start + dot_pos;
-        utils::parse_pattern(ipvfuture_start + 1, version_end, std::isxdigit);
+        utils::parse_pattern(ipvfuture_start + 1, version_end, [](unsigned char c)
+        {
+            return std::isxdigit(c);
+        });
         std::string version(ipvfuture_start + 1, version_end);
 
         if (version.empty()) {
@@ -239,7 +242,10 @@ namespace uri
                     std::string_view::const_iterator port_start,
                     std::string_view::const_iterator port_end) 
     {
-        utils::parse_pattern(port_start, port_end, std::isdigit);
+        utils::parse_pattern(port_start, port_end, [](unsigned char c)
+        {
+            return std::isdigit(c);
+        });
         std::string port(port_start, port_end);
         if (port.empty()) {
             uri->port = no_port;
