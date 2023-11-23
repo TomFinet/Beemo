@@ -10,12 +10,11 @@ set(SRCS
 
 add_library(http STATIC ${SRCS})
 target_link_libraries(http 
-    wsock32
-    ws2_32
     utils
     sockpp
     threadpool
     uri
+    spdlog
 )
 
 if(WIN32)

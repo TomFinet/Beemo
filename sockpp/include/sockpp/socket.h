@@ -28,7 +28,7 @@ namespace sockpp {
 
         static void startup(void)
         {
-            #ifdef WIN32
+            #ifdef _WIN32
             WSADATA wsaData;
             int err = WSAStartup(MAKEWORD(2, 2), &wsaData);
             if (err != 0) {
@@ -39,7 +39,7 @@ namespace sockpp {
 
         static void cleanup(void)
         {
-            #ifdef WIN32
+            #ifdef _WIN32
             WSACleanup();
             #endif
         } 
@@ -97,7 +97,7 @@ namespace sockpp {
             return handle_;
         }
 
-        void address(struct sockaddr *name, unsigned int *namelen)
+        void address(struct sockaddr *name, socklen_t *namelen)
         {
             int err = getsockname(handle_, name, namelen);
             if (err == socket_error) {

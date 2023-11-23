@@ -13,7 +13,6 @@
 #include <sockpp/io_ctx.h>
 #include <sockpp/socket.h>
 
-#include <iostream>
 
 namespace sockpp
 {
@@ -70,7 +69,6 @@ namespace sockpp
                     /* attempt to dequeue an IO completion packet from the completion port. */
                     bool success = GetQueuedCompletionStatus(queue_handle_, &io_size, (PULONG_PTR)&key, (LPOVERLAPPED *)&io, INFINITE);
                     if (!success) {
-                        std::cout << "error code: " << GetLastError() << std::endl;
                         throw std::runtime_error("Failed to dequeue from io queue.");
                     }
 
@@ -78,13 +76,7 @@ namespace sockpp
                         return;
                     }
 
-                    std::cout << std::endl << "io_size: " << io_size << ", io_type: " << ((io->type == io::type::rx) ? "rx" : "tx") << std::endl;
-                    if (io->type == io::type::tx) {
-                        std::cout << io->buf << std::endl;
-                    }
-
                     if (io_size == 0) {
-                        std::cout << "client closed the connection." << std::endl;
                         on_client_close(key);
                         continue;
                     }

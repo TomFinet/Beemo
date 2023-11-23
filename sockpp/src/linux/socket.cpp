@@ -1,7 +1,8 @@
 #include <sockpp/socket.h>
 
 
-namespace sockpp {
+namespace sockpp
+{
 
     void socket::create_handle(int family, int type, int protocol)
     {
@@ -36,6 +37,13 @@ namespace sockpp {
         return last_error_;
     }
 
+    void socket::close_tx(void)
+    {
+        if (handle_ != invalid_handle) {
+            shutdown(handle_, SHUT_WR);
+        }
+    }
+
     void socket::close(void)
     {
         /*if (handle_ != invalid_handle) {
@@ -43,11 +51,5 @@ namespace sockpp {
         }*/
         return;
     }
-
-    void socket::close_tx(void)
-    {
-        if (handle_ != invalid_handle) {
-            shutdown(handle_, SHUT_WR);
-        }
-    }
+   
 }

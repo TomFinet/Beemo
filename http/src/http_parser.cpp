@@ -201,7 +201,6 @@ namespace http
         return;
 
     err_response:
-        std::cout << "field error" << std::endl;
         req->err = &bad_req_handler;
     }
 
@@ -265,14 +264,16 @@ namespace http
         media_type = content_type.substr(0, media_type_end);
         req->media_type = static_cast<media_type_t>(http_keyword_map::keyword_val(media_type));
         if (req->media_type == media_type_invalid) {
-            req->err = &bad_req_handler;
+            req->err = &unsupported_media_type_handler;
+            return;
         }
 
         media_subtype_end = content_type.find(';', media_type_end);
         media_subtype = content_type.substr(media_type_end + 1, media_subtype_end - media_type_end);
         req->media_subtype = static_cast<media_subtype_t>(http_keyword_map::keyword_val(media_subtype));
         if (req->media_subtype == media_subtype_invalid) {
-            req->err = &bad_req_handler; /* should probably be an unimplemented response msg. */
+            req->err = &unsupported_media_type_handler; /* should probably be an unimplemented response msg. */
+            return;
         }
 
         if (media_subtype_end == std::string_view::npos) {
@@ -304,7 +305,6 @@ namespace http
         parse_content_type(req);
 
         if (req->has_err()) {
-            std::cout << "we have a problem" << std::endl;
             return;
         }
 
@@ -316,10 +316,15 @@ namespace http
                 goto bad_req; /* cannot have content-length and transfer-encoding. */
             }
 
+            /* TODO: would be more efficient to do this as we are parsing the transfer encodings. */
+            size_t chunked_cnt = std::count(req->transfer_encodings.begin(), req->transfer_encodings.end(), chunked);
+            if (chunked_cnt > 1 || (chunked_cnt == 1 && req->transfer_encodings.back() != chunked)) {
+                goto bad_req;
+            }
+
             for (encoding_t enc : req->transfer_encodings) {
                 bool fully_decoded = to_encoding_class(enc)->decode(raw_content, req); 
                 if (!fully_decoded) {
-                    std::cout << "incomplete content, making rx request." << std::endl;
                     goto incomplete_content;
                 }
             }

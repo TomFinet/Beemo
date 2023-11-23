@@ -3,18 +3,23 @@
 #include <iostream>
 
 #include <http/server.h>
+#include <http/msg.h>
+#include <http/routing.h>
 
 
-std::string ip = "127.0.0.1";
-int buf_len = 10000;
-int port = 9001;
-int thread_num = 8;
-int timeout_ms = 2000;
+struct http::config config;
+
+void home_handler(struct req *req)
+{
+    std::cout << "WELCOME HOME BABAY!" << std::endl;
+}
 
 int main()
 {
     try {
-        http::server server(buf_len, 20, 1000, timeout_ms, thread_num, port, ip);
+        http::register_req_handler({"/", http::get}, std::function(&home_handler));
+
+        http::server server(config);
         server.start();
     }
     catch (std::exception &ex) {

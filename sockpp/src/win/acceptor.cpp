@@ -14,6 +14,7 @@ namespace sockpp
         local.sin_port = htons(port);
 
         sock_.bind(reinterpret_cast<struct sockaddr*>(&local), sizeof(local));
+        /* TODO: what does backlog mean here? Referring to connections or requests? */
         sock_.listen(backlog);
 
         int zero = 0;

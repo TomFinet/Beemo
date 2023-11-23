@@ -49,6 +49,18 @@ namespace sockpp {
         return last_error_;
     }
 
+    void socket::close_tx(void)
+    {
+        if (handle_ == invalid_handle) {
+            return;
+        }
+
+        int err = shutdown(handle_, SD_SEND);
+        if (err == socket_error) {
+            throw std::runtime_error("Failed to close the send end of the connection.");
+        }
+    }
+
     void socket::close(void)
     {
         if (handle_ != invalid_handle) {

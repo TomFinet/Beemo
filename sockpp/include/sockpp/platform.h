@@ -1,10 +1,8 @@
 #pragma once
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
-#define INVALID_HANDLE INVALID_SOCKET
 
 #elif __linux__
 #include <sys/types.h>
@@ -19,6 +17,7 @@ namespace sockpp
 
 #ifdef WIN32
     using socket_t = SOCKET;
+    using socklen_t = int;
 
     constexpr socket_t invalid_handle = INVALID_SOCKET;    
     constexpr int socket_error = SOCKET_ERROR;

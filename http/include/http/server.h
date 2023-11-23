@@ -17,21 +17,21 @@
 
 #include <threadpool/pool.h>
 
+#include <spdlog/spdlog.h>
+#include <spdlog/sinks/stdout_color_sinks.h>
+
 
 namespace http {
     
     /* Used as the thread limit when creating a completion port. A value
     of 0 is used to indicate: as many threads as this machine has processors. */
     constexpr int nproc = 0;
-    constexpr int default_port = 80;
-    constexpr auto &default_scheme = "http";
 
     class server {
 
         public:
 
-            server(int max_msg_len, int max_conn, int max_backlog, int timeout_ms, int thread_num,
-                   int listening_port, const std::string &listening_ip);
+            server(const struct config &config);
             ~server();
 
             void start(void); 
@@ -39,20 +39,7 @@ namespace http {
         private:
 
             struct config config_;
-
-            /* TODO: replace these with the config struct above. */
-            std::string default_scheme_;
-            int default_port_;
-
-            int max_msg_len;
-            int active_conn;
-            int max_conn;
-            int max_backlog;
-            int timeout_ms;
-            int thread_num;
-
-            int listening_port;
-            std::string listening_ip;
+            std::shared_ptr<spdlog::logger> logger_;
 
             sockpp::acceptor acc;
 
@@ -76,7 +63,6 @@ namespace http {
 
             void handle_rx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io);
             void handle_tx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io);
-            void handle_close(conn_ctx *conn);
     };
 
 }

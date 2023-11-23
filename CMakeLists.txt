@@ -23,6 +23,13 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 include(GoogleTest)
 
+FetchContent_Declare(
+  spdlog
+  URL https://github.com/gabime/spdlog/archive/refs/heads/v1.x.zip
+  DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+)
+FetchContent_MakeAvailable(spdlog)
+
 include_directories(
     ${CMAKE_SOURCE_DIR}/uri/include/
     ${CMAKE_SOURCE_DIR}/sockpp/include/

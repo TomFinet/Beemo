@@ -1,7 +1,6 @@
 #pragma once
 
 #include <memory>
-#include <iostream>
 
 #include <sockpp/socket.h>
 #include <sockpp/io_ctx.h>
@@ -43,6 +42,7 @@ namespace http
         void tx(std::string_view msg)
         {
             if (!(status & conn_tx_closed)) {
+                /* TODO: Might be leaking these when connection is closed, and client later sends packet to us. */
                 sockpp::io_ctx *tx_io = new sockpp::io_ctx(sockpp::io::tx);
                 tx_io->write_buf(msg);
                 skt->tx(tx_io, 1);
@@ -71,19 +71,22 @@ namespace http
 
         void close_tx(void)
         {
-            skt->close_tx();
-            status |= conn_tx_closed;
+            if (!(status & conn_tx_closed)) {
+                skt->close_tx();
+                status |= conn_tx_closed;
+            }
         }
 
-        void close(void)
+        void close_rx(void)
         {
-            close_tx();
-            skt->close();
+            status |= conn_rx_closed;
         }
 
         ~conn_ctx()
         {
-            close();
+            close_tx();
+            skt->close();
+            status |= conn_rx_closed;
         }
     };
 

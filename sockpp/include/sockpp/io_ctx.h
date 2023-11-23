@@ -4,6 +4,8 @@
 #include <string.h>
 #include <string_view>
 
+#include <sockpp/platform.h>
+
 
 namespace sockpp
 {
@@ -17,7 +19,7 @@ namespace sockpp
     /* Provides communication from the initialisation of overlapped IO op to its completion. */
     struct io_ctx {
 
-    #ifdef WIN32
+    #ifdef _WIN32
         WSAOVERLAPPED overlapped;
         WSABUF buf_desc;
     #endif
