@@ -39,10 +39,19 @@ namespace http
             }
         }
 
-        void tx(std::string_view msg)
+        void tx(std::unique_ptr<struct response> response)
         {
             if (!(status & conn_tx_closed)) {
                 /* TODO: Might be leaking these when connection is closed, and client later sends packet to us. */
+                sockpp::io_ctx *tx_io = new sockpp::io_ctx(sockpp::io::tx);
+                tx_io->write_buf(response->to_str());
+                skt->tx(tx_io, 1);
+            }
+        }
+
+        void tx(std::string_view msg)
+        {
+            if (!(status & conn_tx_closed)) {
                 sockpp::io_ctx *tx_io = new sockpp::io_ctx(sockpp::io::tx);
                 tx_io->write_buf(msg);
                 skt->tx(tx_io, 1);

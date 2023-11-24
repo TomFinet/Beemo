@@ -11,6 +11,9 @@ namespace http
     namespace encoding
     {
 
+        /* TODO: since encodings will only every have two functions (encode, decode).
+        It is likely better to use inline function pointers to the functions instead of virtual tables.
+        Furthermore, these classes are singletons, and so we have one instance with 2 virtual functions. */
         class encoded {
             public:
                 /* returns true or false depending on if decoding has completed or not. */

@@ -3,6 +3,9 @@
 #include <string>
 #include <unordered_map>
 #include <queue>
+#include <sstream>
+
+#include <http/http_headers.h>
 
 #include <uri/uri.h>
 
@@ -33,41 +36,7 @@ namespace http
     /* Indicates what stage of message parsing we are at. */
     enum parse_state_t { start_line, headers, content, chunk_trailers, complete };
 
-    constexpr auto &host_header = "host";
-
-    constexpr auto &ok = "200";
-    constexpr auto &created = "201";
-    constexpr auto &accepted = "202";
-    constexpr auto &no_content = "204";
-
-    constexpr auto &multi_choices = "300";
-    constexpr auto &moved_permanently = "301";
-    constexpr auto &found = "302";
-
-    //constexpr auto &bad_req = "400";
-    constexpr auto &unauthorised = "401";
-    constexpr auto &forbidden = "403";
-    constexpr auto &not_found = "404";
-    constexpr auto &req_timeout = "408";
-    constexpr auto &unsupported_media_type = "415";
-    constexpr auto &upgrade_required = "426";
-
-    constexpr auto &internal_err = "500";
-    constexpr auto &not_implemented = "501";
-    constexpr auto &bad_gateway = "502";
-    constexpr auto &service_unavailable = "503";
-
-    constexpr auto &content_length_token = "content-length";
-    constexpr auto &transfer_encoding_token = "transfer-encoding";
-    constexpr auto &content_type_token = "content-type";
-    constexpr auto &content_encoding_token = "content-encoding";
-    constexpr auto &charset_token = "charset";
-
-    constexpr int status_code_len = 4;
     
-    /* this is a server default and not a message constant, should be moved to server. */
-    constexpr auto &default_content_type = "application/json";
-
     /* forward declarations to break circular dependency. */
     class err_handler;
 
@@ -110,6 +79,8 @@ namespace http
         bool has_err(void) const;
     };
 
+    constexpr int status_code_len = 4;
+
     struct response {
 
         /* metadata */
@@ -128,6 +99,21 @@ namespace http
         response(unsigned short status_code, const std::string &reason)
             : version{1, 1}, status_code(status_code), reason(reason) { }
 
+        std::string to_str(void)
+        {
+            std::stringstream ss;
+            ss << "HTTP/" << version.major << "." << version.minor << " " << status_code << " " << reason << "\r\n";
+
+            for (auto &field : fields) {
+                ss << field.first << ": " << field.second << "\r\n";
+            }
+
+            if (!content.empty()) {
+                ss << "\r\n" << content;
+            }
+
+            return ss.str();
+        }
     };
 
 }

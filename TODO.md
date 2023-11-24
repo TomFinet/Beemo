@@ -1,9 +1,9 @@
 In Progress:
 ------------
 
-- add request handler api.
+- write response builder methods.
 - add linux support to sockpp. (HIGH PRIORITY)
-- integrate configuration struct into server. (IN PROGRESS)
+- integrate configuration struct into server.
 
 
 Specific Tasks:
@@ -14,7 +14,6 @@ Specific Tasks:
   also update uri tests to no longer expect exceptions thrown.
 - support compress, deflate, identity and gzip encodings.
 - write test to stress number of concurrent connections.
-- write response builder methods.
 - support more http headers.
 
 General Improvements:

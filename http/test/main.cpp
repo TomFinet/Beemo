@@ -9,15 +9,15 @@
 
 struct http::config config;
 
-void home_handler(struct req *req)
+std::string home_handler(struct req *req)
 {
-    std::cout << "WELCOME HOME BABAY!" << std::endl;
+    return "<html><p>Tom's Corner of the Web.</p></html>";
 }
 
 int main()
 {
     try {
-        http::register_req_handler({"/", http::get}, std::function(&home_handler));
+        http::register_req_handler({"/", http::get}, (http::req_handler_t)&home_handler);
 
         http::server server(config);
         server.start();

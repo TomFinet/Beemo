@@ -17,15 +17,18 @@ namespace http
 
     /* default server network configuration. */
     constexpr unsigned int default_listening_port = 9001;
-    constexpr auto& default_listening_ip = "127.0.0.1";
-    constexpr auto& default_listening_reg_name = "localhost";
+    constexpr auto &default_listening_ip = "127.0.0.1";
+    constexpr auto &default_listening_reg_name = "localhost";
 
     /* default server message parsing configuration. */
     constexpr unsigned int default_max_req_line_len = 1000;
     constexpr unsigned int default_max_uri_len = 900;
-    constexpr auto& default_default_uri_scheme = "http";
+    constexpr auto &default_default_uri_scheme = "http";
+    constexpr auto &default_default_req_content_type = "application/json";
 
     constexpr auto &default_logger_name = "http_server";
+
+    constexpr auto &default_resource_search_path = "";
 
 
     /* stores the configuration options chosen by the server. */
@@ -70,7 +73,12 @@ namespace http
         /* The uri scheme to use by default when uri leaves the scheme unspecified. */
         std::string default_uri_scheme = default_default_uri_scheme;
 
+        /* Default content type when request leaves it unspecified. */
+        std::string default_req_content_type = default_default_req_content_type;
+
         std::string logger_name = default_logger_name;
+
+        std::string resource_search_path = default_resource_search_path;
     };
 
     /* read-only configuration. */

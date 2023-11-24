@@ -335,7 +335,7 @@ namespace http
             }
             req->content = raw_content.substr(0, req->content_len);
         }
-        else {
+        else if (req->method != get) {
             goto len_required;
         }
         

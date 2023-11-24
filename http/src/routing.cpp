@@ -49,24 +49,26 @@ namespace http
         return;
     }
 
-    void route_to_resource_handler(req *const req)
+    std::unique_ptr<struct response> route_to_resource_handler(req *const req)
     {
         /* we are going to parse the req uri path, lookup a registered handler
         for that path and request method. If it exists let it execute, else respond with error code. */
         req_id req_id {req->uri.path, req->method};
+        std::unique_ptr<struct response> response = std::make_unique<struct response>();
 
         if (!req_to_handler.contains(req_id)) {
             goto err_not_found;
         }
 
-        /* call the request handler. */
-        req_to_handler[req_id](req);
-
-        return;
+        response->version = {1, 1};
+        response->status_code = 200;
+        response->reason = "OK";
+        response->content = req_to_handler[req_id](req);
+        return std::move(response);
 
     err_not_found:
         req->err = &bad_req_handler;
-        return;
+        return std::make_unique<struct response>();
     }
 
     void register_req_handler(const req_id &req_id, req_handler_t req_handler)

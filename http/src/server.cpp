@@ -82,6 +82,7 @@ namespace http
     void server::handle_rx(conn_ctx *conn_ptr, std::unique_ptr<sockpp::io_ctx> io)
     {
         std::shared_ptr<conn_ctx> conn = connections[conn_ptr->skt->handle()];
+        std::unique_ptr<struct response> response; 
 
         conn->reassembly_buf += std::string(io->buf, io->bytes_rx);
 
@@ -115,13 +116,14 @@ namespace http
             goto err;
         }
 
-        /* there are no errors, offloading the request to the handler for the request uri. */
-        route_to_resource_handler(conn->request.get());
+        /* there are no errors, offloading the request to the handler for the request uri. */ 
+        response = route_to_resource_handler(conn->request.get());
+        if (conn->request->has_err()) {
+            goto err;
+        }
 
         conn->reset_for_next();
-        // this is where we need to hook in controller to process struct req, and
-        // build the response.
-        conn->tx("HTTP/1.1 200 OK\r\nContent-Length: 13\r\n\r\nHowdy cowboy!");
+        conn->tx(std::move(response));
         return;
 
     err:

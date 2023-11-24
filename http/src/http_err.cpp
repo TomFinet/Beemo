@@ -24,10 +24,10 @@ namespace http
     {
         logger->error("Error {0:d} {1}", status_code, reason);
         conn->reset_for_next();
-        std::stringstream s;
-        s << "HTTP/1.1 " << status_code << " " << reason << "\r\nContent-Length: 0\r\n\r\n";
+        std::stringstream ss;
+        ss << "HTTP/1.1 " << status_code << " " << reason << "\r\nContent-Length: 0\r\n\r\n";
         conn->close_rx();
-        conn->tx(s.str()); 
+        conn->tx(ss.str()); 
     }
 
 }

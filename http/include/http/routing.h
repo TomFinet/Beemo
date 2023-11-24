@@ -4,6 +4,7 @@
 
 #include <string>
 #include <functional>
+#include <memory>
 
 
 namespace http
@@ -26,13 +27,12 @@ namespace http
         }
     };
 
-    typedef std::function<void(struct req *)> req_handler_t;
-
+    typedef std::string (*req_handler_t)(struct req *);
 
     /* the first step to routing is to ensure the message is semantically correct. */ 
     void validate(req *const req, const struct config &config);
 
-    void route_to_resource_handler(req *const req);
+    std::unique_ptr<struct response> route_to_resource_handler(req *const req);
 
     void register_req_handler(const req_id &req_id, req_handler_t req_handler);
 
