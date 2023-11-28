@@ -18,12 +18,17 @@ namespace sockpp
 #ifdef WIN32
     using socket_t = SOCKET;
     using socklen_t = int;
+    using io_queue_t = void*;
 
     constexpr socket_t invalid_handle = INVALID_SOCKET;    
     constexpr int socket_error = SOCKET_ERROR;
     
+    
+
 #elif __linux__
     using socket_t = int;
+    using socklen_t = int;
+    using io_queue_t = int;
 
     constexpr int invalid_handle = -1;
     constexpr int socket_error = -1;

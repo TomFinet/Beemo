@@ -10,6 +10,7 @@
 #include <thread>
 
 #include <sockpp/platform.h>
+#include <sockpp/conn_ctx.h>
 #include <sockpp/io_ctx.h>
 #include <sockpp/socket.h>
 
@@ -17,85 +18,29 @@
 namespace sockpp
 {
 
+    using io_cb_t = std::function<void(socket_t)>;
+
     /* A queue for all network IO requests and responses. We can add socket handlers
     whose requests and responses will be managed through this queue. Worker threads then
     listen for new IO and service them. The ctx_t gives the workers all the context needed to
     service the network IO. */
-    template<typename key_t>
     class io_queue {
          
         private:
-
-            typedef std::function<void(key_t*, std::unique_ptr<io_ctx>)> io_cb_t;
-
-            void *queue_handle_;
-
             io_cb_t on_rx;
             io_cb_t on_tx;
-            std::function<void(key_t*)> on_client_close;
+            io_cb_t on_client_close;
+            io_queue_t queue_handle_;
 
         public:
 
-            io_queue(unsigned int thread_num, io_cb_t on_rx, io_cb_t on_tx,
-                     std::function<void(key_t*)> on_client_close)
-                : on_rx(on_rx), on_tx(on_tx), on_client_close(on_client_close)
-            {
-                /* create the io queue. */
-                queue_handle_ = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, thread_num);
-                if (queue_handle_ == nullptr) {
-                    throw std::runtime_error("Failed to create io queue.");
-                }
-            }
-
+            io_queue(io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close);
             ~io_queue() { }
 
-            /* add socket handle to IOCP so that we may send and receive its response/reqs to the IO queue. */
-            void register_socket(const socket_t handle, const key_t *const key)
-            {
-                queue_handle_ = CreateIoCompletionPort((HANDLE)handle, queue_handle_, (DWORD_PTR)key, 0);
-                if (queue_handle_ == nullptr) {
-                    throw std::runtime_error("Failed to add socket to completion port.");
-                }
-            }
-
-            /* listens for queued io, depending on the context calls on_rx or on_tx. */
-            void dequeue(void)
-            {
-                unsigned long io_size = 0;
-                key_t *key = nullptr;
-                io_ctx *io = nullptr;
-
-                while (true) {
-                    /* attempt to dequeue an IO completion packet from the completion port. */
-                    bool success = GetQueuedCompletionStatus(queue_handle_, &io_size, (PULONG_PTR)&key, (LPOVERLAPPED *)&io, INFINITE);
-                    if (!success) {
-                        throw std::runtime_error("Failed to dequeue from io queue.");
-                    }
-
-                    if (key == nullptr) {
-                        return;
-                    }
-
-                    if (io_size == 0) {
-                        on_client_close(key);
-                        continue;
-                    }
-                    
-                    std::unique_ptr<io_ctx> io_ctx;
-                    io_ctx.reset(io);
-
-                    if (io->type == io::type::rx) {
-                        io->bytes_rx = io_size;
-                        on_rx(key, std::move(io_ctx));
-                    }
-                    else if (io->type == io::type::tx) {
-                        io->bytes_tx += io_size;
-                        on_tx(key, std::move(io_ctx));
-                    }
-                }
-            }
+            void register_socket(const socket_t handle, const conn_ctx *const conn); 
+            void dequeue(void);
             
-            void* get_handle(void)
+            io_queue_t get_handle(void)
             {
                 return queue_handle_;
             }

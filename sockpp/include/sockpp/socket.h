@@ -81,7 +81,7 @@ namespace sockpp {
         
         socket_t accept(void);
 
-        void set_options(int level, int optname, const char *optval, int oplen)
+        void set_options(int level, int optname, const char* optval, int oplen)
         {
             int err = setsockopt(handle_, level, optname, optval, oplen);
             if (err == socket_error) {
@@ -95,6 +95,11 @@ namespace sockpp {
         socket_t handle(void)
         {
             return handle_;
+        }
+
+        void set_handle(socket_t handle)
+        {
+            handle_ = handle;
         }
 
         void address(struct sockaddr *name, socklen_t *namelen)

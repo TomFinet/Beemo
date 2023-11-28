@@ -5,8 +5,9 @@
 #include <memory>
 
 #include <http/msg.h>
-#include <http/http_parser.h>
-#include <http/http_err.h>
+#include <http/config.h>
+#include <http/parser.h>
+#include <http/err.h>
 
 TEST(HttpTest, Parse_Valid_Headers)
 {
@@ -19,7 +20,7 @@ TEST(HttpTest, Parse_Valid_Headers)
         "Test body...";
 
     std::unique_ptr<http::req> req = std::make_unique<http::req>();
-    http::parse_headers(get, 0, req.get());
+    http::parse_headers(get, req.get(), {0, {}});
 
     ASSERT_EQ(req->method, http::get);
     ASSERT_EQ(req->uri.path, "/search");
@@ -157,7 +158,7 @@ TEST(HttpTest, Chunked)
         "\r\n";
 
     http::req req;
-    http::parse_headers(chunked_post, 0, &req);
+    http::parse_headers(chunked_post, &req, {0, {}});
 
     ASSERT_FALSE(req.has_err());
     ASSERT_EQ(req.fields[http::transfer_encoding_token], "chunked");

@@ -5,7 +5,7 @@
 #include <queue>
 #include <sstream>
 
-#include <http/http_headers.h>
+#include <http/headers.h>
 
 #include <uri/uri.h>
 
@@ -36,7 +36,6 @@ namespace http
     /* Indicates what stage of message parsing we are at. */
     enum parse_state_t { start_line, headers, content, chunk_trailers, complete };
 
-    
     /* forward declarations to break circular dependency. */
     class err_handler;
 
@@ -98,6 +97,12 @@ namespace http
         response() : version{1, 1} { }
         response(unsigned short status_code, const std::string &reason)
             : version{1, 1}, status_code(status_code), reason(reason) { }
+
+
+        inline void add_header(const std::string &header, const std::string &value)
+        {
+            fields[header] = value;
+        }
 
         std::string to_str(void)
         {

@@ -1,5 +1,5 @@
-#include <http/http_parser.h>
-#include <http/http_encoding.h>
+#include <http/parser.h>
+#include <http/encoding.h>
 
 #include <uri/uri_parser.h>
 
@@ -41,14 +41,14 @@ namespace
 namespace http
 {
 
-    size_t parse_headers(std::string_view raw_req, size_t start_idx, req *const req)
+    size_t parse_headers(std::string_view raw_req, struct req *const req, const struct parse_ctx &ctx)
     {
         std::string_view req_line;
         std::string_view field_line;
-        size_t line_start = start_idx;
+        size_t line_start = ctx.start_idx;
         size_t line_end;
         size_t req_line_end;
-        size_t parsed_up_to = start_idx;
+        size_t parsed_up_to = ctx.start_idx;
 
         if (req->parse_state == start_line) {
             req_line_end = raw_req.find(crlf);
@@ -58,7 +58,7 @@ namespace http
 
             req_line = {raw_req.begin(), raw_req.begin() + req_line_end}; 
             line_start = req_line_end + 2;
-            parse_req_line(req_line, req); 
+            parse_req_line(req_line, req, ctx.config->max_req_line_len); 
         }
 
         while (req->parse_state == parse_state_t::headers && !req->has_err()) {
@@ -80,7 +80,6 @@ namespace http
             else {
                 field_line = {raw_req.begin() + line_start, raw_req.begin() + line_end};
                 parse_field_line(field_line, req);
-
                 line_start = line_end + 2;
             }
         }
@@ -92,14 +91,14 @@ namespace http
         return parsed_up_to;
    }
 
-    void parse_req_line(std::string_view req_line, req *const req)
+    void parse_req_line(std::string_view req_line, req *const req, const size_t max_req_line_len)
     {
         size_t method_end;
         size_t req_target_end;
         std::string_view req_target;
         std::string_view version;
 
-        if (req_line.empty()) {
+        if (req_line.empty() && req_line.size() > max_req_line_len) {
             goto err_response;
         }
 
@@ -255,7 +254,7 @@ namespace http
         size_t media_subtype_end;
 
         if (!req->fields.contains(content_type_token)) {
-            req->fields[content_type_token] = default_content_type;
+            req->fields[content_type_token] = "application/json";
         }
 
         content_type = req->fields[content_type_token];

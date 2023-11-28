@@ -8,3 +8,7 @@ curl "127.0.0.1:9001" --max-time 1 --verbose \
 curl "127.0.0.1:9001" --max-time 1 --verbose \
     -X GET \
     -H "Content-Length: 0"
+
+curl "127.0.0.1:9001" --max-time 1 --verbose \
+    -X GET \
+    -H "Content-Length: 0"

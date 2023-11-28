@@ -1,15 +1,16 @@
 #include <http/routing.h>
 #include <http/config.h>
-#include <http/http_err.h>
+#include <http/err.h>
 
 #include <unordered_map>
+#include <iostream>
 
 
 namespace http
 {
 
     /* Users of this API will register request handlers with this map. */
-    typedef std::unordered_map<struct req_id, req_handler_t, struct req_hasher> req_handler_map_t; 
+    using req_handler_map_t = std::unordered_map<struct req_id, req_handler_t, struct req_hasher>; 
 
     req_handler_map_t req_to_handler;
 
@@ -64,10 +65,11 @@ namespace http
         response->status_code = 200;
         response->reason = "OK";
         response->content = req_to_handler[req_id](req);
+        response->add_header("Content-Length", std::to_string(response->content.size()));
         return std::move(response);
 
     err_not_found:
-        req->err = &bad_req_handler;
+        req->err = &not_found_handler;
         return std::make_unique<struct response>();
     }
 

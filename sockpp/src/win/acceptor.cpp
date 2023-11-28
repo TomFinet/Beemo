@@ -4,7 +4,8 @@
 namespace sockpp
 {
 
-    void acceptor::open(const std::string &ip, const int port, const unsigned int backlog)
+    void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,
+                        const unsigned short linger_sec, const unsigned int rx_buf_len)
     {
         sock_.create_handle(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -14,11 +15,16 @@ namespace sockpp
         local.sin_port = htons(port);
 
         sock_.bind(reinterpret_cast<struct sockaddr*>(&local), sizeof(local));
-        /* TODO: what does backlog mean here? Referring to connections or requests? */
         sock_.listen(backlog);
 
-        int zero = 0;
-        sock_.set_options(SOL_SOCKET, SO_SNDBUF, reinterpret_cast<char*>(&zero), sizeof(zero));
+        const int zero = 0;
+        const int one = 1;
+        struct linger l = {1, linger_sec};
+
+        sock_.set_options(SOL_SOCKET, SO_SNDBUF, (char *)&zero, sizeof(zero));
+        sock_.set_options(SOL_SOCKET, SO_LINGER, (char *)&l, sizeof(l));
+        sock_.set_options(SOL_SOCKET, SO_KEEPALIVE, (char *)&one, sizeof(one)); /* not sure if needed. */
+        sock_.set_options(SOL_SOCKET, SO_RCVBUF, (char *)&rx_buf_len, sizeof(rx_buf_len));
     }
 
 }

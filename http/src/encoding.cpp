@@ -1,5 +1,5 @@
-#include <http/http_encoding.h>
-#include <http/http_parser.h>
+#include <http/encoding.h>
+#include <http/parser.h>
 
 #include <sstream>
 #include <iostream>

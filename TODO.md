@@ -1,20 +1,22 @@
 In Progress:
 ------------
 
-- write response builder methods.
-- add linux support to sockpp. (HIGH PRIORITY)
+- write response builder methods, maybe for each request method we have a response builder.
+- add linux support to sockpp. (HIGH PRIORITY) TODAY.
 - integrate configuration struct into server.
 
 
 Specific Tasks:
 ---------------
 
+- Split config into server and parser configs. Also we have one parser per config.
 - add timeout to request handlers.
 - fix uri error propagation (used to be using exceptions, now using err handler field of req struct).
   also update uri tests to no longer expect exceptions thrown.
 - support compress, deflate, identity and gzip encodings.
 - write test to stress number of concurrent connections.
 - support more http headers.
+- Test sending a response which overflows an io_ctx buffer.
 
 General Improvements:
 ---------------------

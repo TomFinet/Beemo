@@ -43,3 +43,17 @@ monitor, e.g. data rx'ed on fd => use EPOLLIN
 
 a thread can be notified of events that happened on a monitored fd by calling epoll_wait(epfd, event_list, max_events, timeout)
 
+We can have edge triggered or level triggered event notifications.
+
+EPOLLONESHOT flag deregisters a fd when epoll_wait returns an even associated with it.
+To write an IO class that is compatible with windows IOCP, we can use:
+
+- epoll_ctl as a read and write request.
+- epoll_wait as a dequeue, combined with EPOLLONESHOT to avoid packets for a single connection being spread over multiple threads simultaneously.
+
+We can use edge triggered events to help prevent data
+
+
+We don't want lower level modules i.e. sockpp to depend on how the higher levels use it.
+Otherwise, we lose the power of modularity and reuse. It is fine for higher levels to depend on lower levels
+however, since they by definition build on the lower layer apis.

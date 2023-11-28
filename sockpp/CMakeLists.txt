@@ -11,6 +11,7 @@ set(SRCS
     src/${PLATFORM}/socket.cpp
     src/${PLATFORM}/acceptor.cpp
     src/${PLATFORM}/io_ctx.cpp
+    src/${PLATFORM}/io_queue.cpp
 )
 
 add_library(sockpp STATIC ${SRCS})

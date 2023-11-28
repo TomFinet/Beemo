@@ -11,7 +11,7 @@ struct http::config config;
 
 std::string home_handler(struct req *req)
 {
-    return "<html><p>Tom's Corner of the Web.</p></html>";
+    return "<html><h1>Tom's Corner of the Web.</h1></html>";
 }
 
 int main()
