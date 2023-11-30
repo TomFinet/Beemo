@@ -3,11 +3,11 @@
 #include <stdexcept>
 #include <memory>
 
-#include <sockpp/platform.h>
-#include <sockpp/io_ctx.h>
+#include <transport/platform.h>
+#include <transport/io_ctx.h>
 
 
-namespace sockpp {
+namespace transport {
 
     class socket {
 

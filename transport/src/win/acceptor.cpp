@@ -1,7 +1,7 @@
-#include <sockpp/acceptor.h>
+#include <transport/acceptor.h>
 
 
-namespace sockpp
+namespace transport
 {
 
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,

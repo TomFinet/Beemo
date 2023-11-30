@@ -7,12 +7,13 @@
 #elif __linux__
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/epoll.h>
 #include <netinet/in.h>
 
 #include <errno.h>
 #endif
 
-namespace sockpp
+namespace transport
 {
 
 #ifdef WIN32
@@ -32,6 +33,7 @@ namespace sockpp
 
     constexpr int invalid_handle = -1;
     constexpr int socket_error = -1;
+    constexpr int epoll_error = -1;
     
 #endif
 

@@ -34,8 +34,8 @@ namespace http
             goto err_bad_req;
         }
 
-        if (req->uri.port != config.listening_port || 
-           (req->uri.ipv4 != config.listening_ip &&
+        if (req->uri.port != config.transport.listening_port || 
+           (req->uri.ipv4 != config.transport.listening_ip &&
             req->uri.reg_name != config.listening_reg_name)) {
             goto err_misdirected_req;
         }

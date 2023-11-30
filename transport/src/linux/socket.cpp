@@ -23,12 +23,17 @@ namespace sockpp
 
     void socket::rx(io_ctx *const io, const int buf_num)
     {
-        return;
+        int nbytes = recv(handle_, io->buf, sizeof(io->buf), 0);
+        if (nbytes == socket_error) {
+            // something
+        }
+        io->bytes_rx = nbytes;
     }
 
     void socket::tx(io_ctx *const io, const int buf_num)
     {
-        return;
+        int nbytes = send(handle_, io->buf, sizeof(io->bytes_to_tx));
+        /* TODO: finish the method. */
     }
 
     int socket::get_last_error(void)
@@ -46,10 +51,9 @@ namespace sockpp
 
     void socket::close(void)
     {
-        /*if (handle_ != invalid_handle) {
+        if (handle_ != invalid_handle) {
             ::close(handle_);
-        }*/
-        return;
+        }
     }
    
 }

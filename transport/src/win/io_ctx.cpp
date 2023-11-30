@@ -1,7 +1,7 @@
-#include <sockpp/io_ctx.h>
+#include <transport/io_ctx.h>
 
 
-namespace sockpp
+namespace transport
 {
 
     io_ctx::io_ctx(io::type type) : type(type), bytes_rx(0), bytes_tx(0), bytes_to_tx(0), overlapped{0}

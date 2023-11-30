@@ -2,9 +2,9 @@
 
 #include <string>
 
-#include <sockpp/socket.h>
+#include <transport/socket.h>
 
-namespace sockpp
+namespace transport
 {
 
     class acceptor {

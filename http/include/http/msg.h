@@ -76,6 +76,16 @@ namespace http
 
         void print(void) const;
         bool has_err(void) const;
+
+        bool is_parsing_headers(void) const
+        {
+            return (parse_state == start_line || parse_state == headers) && !has_err();
+        }
+
+        bool is_parsing_incomplete(void) const
+        {
+            return parse_state != complete && !has_err();
+        }
     };
 
     constexpr int status_code_len = 4;

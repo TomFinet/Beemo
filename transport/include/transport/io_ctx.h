@@ -4,10 +4,10 @@
 #include <string.h>
 #include <string_view>
 
-#include <sockpp/platform.h>
+#include <transport/platform.h>
 
 
-namespace sockpp
+namespace transport
 {
     constexpr int max_rx_len = 150;
 

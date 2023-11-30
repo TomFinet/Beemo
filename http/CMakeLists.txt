@@ -10,7 +10,7 @@ set(SRCS
 add_library(http STATIC ${SRCS})
 target_link_libraries(http 
     utils
-    sockpp
+    transport
     threadpool
     uri
     spdlog

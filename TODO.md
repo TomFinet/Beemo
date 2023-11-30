@@ -2,7 +2,7 @@ In Progress:
 ------------
 
 - write response builder methods, maybe for each request method we have a response builder.
-- add linux support to sockpp. (HIGH PRIORITY) TODAY.
+- add linux support to sockpp. (HIGH PRIORITY) TODAY. Make linux sockets non-blocking, since we will be calling them only when they are ready.
 - integrate configuration struct into server.
 
 
@@ -17,6 +17,7 @@ Specific Tasks:
 - write test to stress number of concurrent connections.
 - support more http headers.
 - Test sending a response which overflows an io_ctx buffer.
+- split configuration struct into transport and http configs.
 
 General Improvements:
 ---------------------

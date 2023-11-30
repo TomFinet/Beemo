@@ -32,7 +32,7 @@ FetchContent_MakeAvailable(spdlog)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/uri/include/
-    ${CMAKE_SOURCE_DIR}/sockpp/include/
+    ${CMAKE_SOURCE_DIR}/transport/include/
     ${CMAKE_SOURCE_DIR}/http/include/
     ${CMAKE_SOURCE_DIR}/threadpool/include/
     ${CMAKE_SOURCE_DIR}/utils/include/
@@ -40,6 +40,6 @@ include_directories(
 
 add_subdirectory(utils)
 add_subdirectory(threadpool)
-add_subdirectory(sockpp)
+add_subdirectory(transport)
 add_subdirectory(uri)
 add_subdirectory(http)

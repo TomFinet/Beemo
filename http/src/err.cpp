@@ -23,10 +23,10 @@ namespace http
     {
         logger->error("Error {0:d} {1}", status_code, reason);
         conn->reset_for_next();
-        conn->res->status_code = status_code;
-        conn->res->reason = reason;
-        conn->res->add_header("Content-Length", "0");
-        conn->res->add_header("Connection", "close");
+        conn->res_->status_code = status_code;
+        conn->res_->reason = reason;
+        conn->res_->add_header("Content-Length", "0");
+        conn->res_->add_header("Connection", "close");
         conn->tx(); 
         conn->close_tx();
     }
