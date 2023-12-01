@@ -19,14 +19,11 @@ namespace http
         constexpr auto &default_default_uri_scheme = "http";
         constexpr auto &default_default_req_content_type = "application/json";
 
-        constexpr auto &default_resource_search_path = "";
-
         constexpr auto &default_logger_name = "http";
     }
 
     /* stores the configuration options chosen by the server. */
     struct config {
-
         /* Server listens for transport packets addressed to this registered name.
         DONE. */
         std::string listening_reg_name = default_listening_reg_name;
@@ -38,12 +35,11 @@ namespace http
         /* The uri scheme to use by default when uri leaves the scheme unspecified. */
         std::string default_uri_scheme = default_default_uri_scheme;
 
-        /* Default content type when request leaves it unspecified. */
+        /* Default content type when request leaves it unspecified.
+        DONE. */
         std::string default_req_content_type = default_default_req_content_type;
 
         std::string logger_name = default_logger_name;
-
-        std::string resource_search_path = default_resource_search_path;
 
         /* Transport layer configuration. */
         struct transport::config transport;

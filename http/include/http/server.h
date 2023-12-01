@@ -45,6 +45,7 @@ namespace http
             void handle_connection(std::shared_ptr<transport::conn_ctx> conn);
             void handle_rx(transport::socket_t handle);
             void handle_tx(transport::socket_t handle);
+            void handle_timeout(transport::socket_t skt_handle);
     };
 
 }

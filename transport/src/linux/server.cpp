@@ -11,8 +11,10 @@ namespace transport
     constexpr int block_indefinitely = -1;
 
 
-    server::server(conn_cb_t on_conn, io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close, const config &config)
-        : on_conn_(on_conn), on_rx(on_rx), on_tx(on_tx), on_client_close(on_client_close), config_(config)
+    server::server(conn_cb_t on_conn, io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close,
+                   io_cb_t on_timeout, const config &config)
+        : on_conn_(on_conn), on_rx(on_rx), on_tx(on_tx), on_client_close(on_client_close),
+          on_timeout_(on_timeout), config_(config)
     {
         transport::socket::startup();
         logger_ = spdlog::stdout_color_mt("transport");
@@ -29,7 +31,7 @@ namespace transport
 
     void server::register_socket(const socket_t handle, conn_ctx *const conn)
     {
-        if (events_.size() >= max_epoll_events) {
+        if (events_.size() >= config_.max_concurrent_connections) {
             return;
         }
 
@@ -46,6 +48,7 @@ namespace transport
         events_[conn->skt->handle()] = std::move(event);
     }
 
+    /* Per thread event readyness loop. */
     void server::dequeue(void)
     {
         while (true) {
@@ -69,9 +72,12 @@ namespace transport
                 else if (event.events & EPOLLIN) {
                     std::unique_ptr<io_ctx> rx_io = std::make_unique<io_ctx>(io::type::rx);
                     conn->skt->rx(rx_io.get(), 1);
-
                     conn->on_rx(std::string_view(rx_io->buf, rx_io->bytes_rx));
-                    on_rx(conn->skt->handle());
+
+                    try {
+                        on_rx(conn->skt->handle());
+                    }
+                    catch ()
                 }
                 else if (event.events & EPOLLOUT) {
                     io_ctx *const tx_io = outgoing_io_[conn->skt->handle()].get();
@@ -88,16 +94,16 @@ namespace transport
         }
     }
     
-    void server::rx(socket *const skt)
+    void server::rx(conn_ctx *const conn)
     {
         epoll_event* rx_event = events_[skt->handle()].get();
         rx_event->events &= ~EPOLLOUT;
         rx_event->events |= EPOLLIN;
 
-        int err = epoll_ctl(queue_handle_, EPOLL_CTL_MOD, skt->handle(), rx_event);
+        int err = epoll_ctl(queue_handle_, EPOLL_CTL_MOD, conn->skt->handle(), rx_event);
     }
 
-    void server::tx(socket *const skt, std::string_view msg)
+    void server::tx(conn_ctx *const conn, std::string_view msg)
     {
         epoll_event* tx_event = events_[skt->handle()].get();
         tx_event->events |= EPOLLOUT;
@@ -110,6 +116,6 @@ namespace transport
             outgoing_io_[skt->handle()] = std::move(tx_io);
         }
 
-        int err = epoll_ctl(queue_handle_, EPOLL_CTL_MOD, skt->handle(), tx_event);
+        int err = epoll_ctl(queue_handle_, EPOLL_CTL_MOD, conn->skt->handle(), tx_event);
     }
 }

@@ -16,6 +16,7 @@ namespace http
             [this](transport::socket_t skt_handle) { this->handle_rx(skt_handle); },
             [this](transport::socket_t skt_handle) { this->handle_tx(skt_handle); },
             [this](transport::socket_t skt_handle) { this->remove_conn(skt_handle); },
+            [this](transport::socket_t skt_handle) { this->handle_timeout(skt_handle); },
             config_.transport
         );
     }
@@ -93,6 +94,13 @@ namespace http
         else {
             conn->rx();
         }
+    }
+
+    void server::handle_timeout(transport::socket_t skt_handle)
+    {
+        std::shared_ptr<connection> conn = connections_[skt_handle];
+        timeout_handler.handle(conn, logger_);
+        conn->close_tx();
     }
 
     void server::add_conn(std::shared_ptr<connection> conn)

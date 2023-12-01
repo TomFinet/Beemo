@@ -29,6 +29,7 @@ namespace http
     /* to be used as singletons globally, hence the external linkage. */ 
     extern err_response_handler bad_req_handler;
     extern err_response_handler not_found_handler;
+    extern err_response_handler timeout_handler;
     extern err_response_handler len_required_handler;
     extern err_response_handler uri_too_long_handler;
     extern err_response_handler unsupported_media_type_handler;

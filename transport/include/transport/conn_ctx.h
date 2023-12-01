@@ -21,8 +21,8 @@ namespace transport
         std::unique_ptr<socket> skt;
 
         /* Functions to initiate rx/tx over a connection. */
-        std::function<void(socket *const)> rx_;
-        std::function<void(socket *const, std::string_view)> tx_;
+        std::function<void(conn_ctx *const)> rx_;
+        std::function<void(conn_ctx *const, std::string_view)> tx_;
 
         unsigned int status;
 
@@ -32,22 +32,22 @@ namespace transport
         conn_ctx() : status(conn_keep_alive) { }
 
         conn_ctx(transport::socket_t skt_handle,
-                 std::function<void(socket *const)> rx,
-                 std::function<void(socket *const, std::string_view)> tx)
+                 std::function<void(conn_ctx *const)> rx,
+                 std::function<void(conn_ctx *const, std::string_view)> tx)
             : skt(std::make_unique<socket>(skt_handle)),
               rx_(rx), tx_(tx), status(conn_keep_alive) { }
 
         void do_rx(void)
         {
             if (!(status & conn_rx_closed)) {
-                rx_(skt.get());
+                rx_(this);
             }
         }
 
         void do_tx(std::string_view msg)
         {
             if (!(status & conn_tx_closed)) {
-                tx_(skt.get(), msg);
+                tx_(this, msg);
             }
         }
 

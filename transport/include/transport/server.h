@@ -18,6 +18,9 @@
 
 #include <threadpool/pool.h>
 
+#include <utils/timeout.h>
+#include <utils/timeout_err.h>
+
 #include <spdlog/spdlog.h>
 #include <spdlog/sinks/stdout_color_sinks.h>
 
@@ -35,6 +38,7 @@ namespace transport
             io_cb_t on_rx;
             io_cb_t on_tx;
             io_cb_t on_client_close;
+            io_cb_t on_timeout_;
             io_queue_t queue_handle_;
 
             acceptor acc_;
@@ -60,7 +64,8 @@ namespace transport
 
         public:
 
-            server(conn_cb_t on_conn, io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close, const config &config);
+            server(conn_cb_t on_conn, io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close,
+                   io_cb_t on_timeout, const config &config);
 
             ~server()
             {
@@ -94,8 +99,8 @@ namespace transport
                     transport::socket_t skt_handle = acc_.accept();
 
                     std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(skt_handle,
-                        [this](socket *const skt) { this->rx(skt); },
-                        [this](socket *const skt, std::string_view msg) { this->tx(skt, msg);
+                        [this](conn_ctx *const conn) { this->rx(conn); },
+                        [this](conn_ctx *const conn, std::string_view msg) { this->tx(conn, msg);
                     });
 
                     logger_->info("Connections: {0:d}", conns_.size());
@@ -109,8 +114,8 @@ namespace transport
 
             void dequeue(void);
 
-            void rx(socket *const skt);
-            void tx(socket *const skt, std::string_view msg);
+            void rx(conn_ctx *const conn);
+            void tx(conn_ctx *const conn, std::string_view msg);
             
             void add_conn(std::shared_ptr<conn_ctx> conn)
             {
@@ -123,6 +128,16 @@ namespace transport
                 std::unique_lock<std::mutex> lock(conn_mutex_);
                 conns_.erase(skt_handle);
                 conn_condition_.notify_one();
+            }
+            
+            void cb_with_timeout(const io_cb_t cb, const socket_t skt_handle)
+            {
+                try {
+                    cb(skt_handle); /* TODO: maybe this should just be in conn->on_rx, that way we can customise io handling per connection, instead of per server. */
+                }
+                catch (utils::timeout_err) {
+                    on_timeout_(skt_handle);
+                }
             }
     };
 

@@ -63,3 +63,20 @@ First what sorts of resources: anything identified by uri, or pointed to by url.
 
 We do not care really, so long as for each type of resource, we have a way to read/write to it.
 We may also want to specify permissions for a resource type instance.
+
+How to implement request timeouts?
+
+When we first start reading request data in handle_rx, that is when we start a timer and schedule it to wake up in X ms from now.
+When a request completes, we disarm the timer, and if the timeout occurs, we simply respond with a timeout error and close the connection.
+
+
+At the OS level, sleep places our thread into the waiting queue. On system clock hardware interrupts, the schedule handler is called,
+which must check the wait queue to see if the front thread has had its timeout point reached, in which case it is added to the ready queue.
+At some future scheduling point, it will be scheduled and the thread will awaken from slumber.
+
+In C++ we have the std::this_thread::sleep_for(std::chrono__milliseconds(x)) function which will make a sleep syscall to do this, in a cross-platform
+way.
+
+Why is sleep a syscall? Syscalls are used to escalate the priveledge level of the CPU in order to execute kernel priveledge instructions.
+It sounds bad for a process to be able to move itself off the running queue, this should be a kernel op, hence the syscall. The user process could
+move other processes around.

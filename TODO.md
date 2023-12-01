@@ -17,7 +17,6 @@ Specific Tasks:
 - write test to stress number of concurrent connections.
 - support more http headers.
 - Test sending a response which overflows an io_ctx buffer.
-- split configuration struct into transport and http configs.
 
 General Improvements:
 ---------------------
@@ -35,3 +34,9 @@ Potential Bugs:
   really we should only be flushing up to where the request ended. Pipelined requests
   may otherwise be flushed. 
 - io_ctx memory leaks due to manually managed allocation with `new`.
+
+
+Done:
+-----
+
+- split configuration struct into transport and http configs.
