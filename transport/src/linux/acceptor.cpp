@@ -1,10 +1,11 @@
-#include <sockpp/acceptor.h>
+#include <transport/acceptor.h>
 
 
-namespace sockpp
+namespace transport
 {
 
-    void acceptor::open(const std::string &ip, const int port, const unsigned int backlog)
+    void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,
+              const unsigned short linger_sec, const unsigned int rx_buf_len)
     {
         sock_.create_handle(AF_INET, SOCK_STREAM, 0);
 

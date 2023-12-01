@@ -194,7 +194,7 @@ namespace http
         field_value_view = field_line.substr(field_value_start);
         req->fields[field_name] = field_value_view;
 
-        if (field_name == host_header) {
+        if (field_name == host_header_token) {
             parse_host(field_value_view, req);
         }
         return;

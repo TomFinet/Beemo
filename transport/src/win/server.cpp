@@ -21,8 +21,7 @@ namespace transport
         }
     }
 
-
-    void server::register_socket(const socket_t handle, const conn_ctx *const conn)
+    void server::register_socket(const socket_t handle, conn_ctx *const conn)
     {
         queue_handle_ = CreateIoCompletionPort((HANDLE)handle, queue_handle_, (DWORD_PTR)conn, 0);
         if (queue_handle_ == nullptr) {

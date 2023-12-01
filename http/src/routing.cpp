@@ -22,7 +22,7 @@ namespace http
             goto err_bad_req;
         }
 
-        if (req->fields[host_header].empty()) {
+        if (req->fields[host_header_token].empty()) {
             goto err_bad_req;
         }
 

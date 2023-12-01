@@ -28,7 +28,7 @@ namespace transport
 
 #elif __linux__
     using socket_t = int;
-    using socklen_t = int;
+    using socklen_t = unsigned int;
     using io_queue_t = int;
 
     constexpr int invalid_handle = -1;

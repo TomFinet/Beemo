@@ -5,12 +5,20 @@
 #include <queue>
 #include <sstream>
 
-#include <http/headers.h>
-
 #include <uri/uri.h>
 
 namespace http
 {
+
+    namespace
+    {
+        constexpr auto &host_header_token = "host";
+        constexpr auto &content_length_token = "content-length";
+        constexpr auto &transfer_encoding_token = "transfer-encoding";
+        constexpr auto &content_type_token = "content-type";
+        constexpr auto &content_encoding_token = "content-encoding";
+        constexpr auto &charset_token = "charset";
+    }
 
     struct version {
         short major;

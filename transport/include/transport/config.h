@@ -5,21 +5,23 @@
 namespace transport
 {
 
-    /* default server resource configuration. */
-    constexpr unsigned int default_max_concurrent_connections = 2;
-    constexpr unsigned int default_max_connection_backlog = 5000;
-    constexpr unsigned int default_max_peer_req_per_min = 50;
-    constexpr unsigned int default_req_timeout_ms = 2000;
-    constexpr unsigned int default_idle_connection_timeout_ms = 10000;
-    constexpr unsigned short default_max_linger_sec = 2;
-    constexpr int default_num_req_handler_threads = 8;
-    constexpr unsigned int default_rx_buf_len = 1024;
+    namespace
+    {
+        /* default server resource configuration. */
+        constexpr unsigned int default_max_concurrent_connections = 2;
+        constexpr unsigned int default_max_connection_backlog = 5000;
+        constexpr unsigned int default_max_peer_req_per_min = 50;
+        constexpr unsigned int default_req_timeout_ms = 2000;
+        constexpr unsigned int default_idle_connection_timeout_ms = 10000;
+        constexpr unsigned short default_max_linger_sec = 2;
+        constexpr int default_num_req_handler_threads = 8;
+        constexpr unsigned int default_rx_buf_len = 1024;
 
-    constexpr unsigned int default_listening_port = 9001;
-    constexpr auto &default_listening_ip = "127.0.0.1";
+        constexpr unsigned int default_listening_port = 9001;
+        constexpr auto &default_listening_ip = "127.0.0.1";
 
-    constexpr auto &default_logger_name = "transport";
-
+        constexpr auto &default_logger_name = "transport";
+    }
 
     struct config {
         /* Maximum number of ms spent handling a request before a timeout. */

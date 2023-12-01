@@ -1,14 +1,16 @@
-#include <sockpp/socket.h>
+#include <transport/socket.h>
+
+#include <unistd.h>
 
 
-namespace sockpp
+namespace transport
 {
 
     void socket::create_handle(int family, int type, int protocol)
     {
         handle_ = ::socket(family, type, protocol); 
         if (handle_ == invalid_handle) {
-            throw std::runtime_error("Failed to create the socket.");
+            throw std::runtime_error("Failed to create the transport.");
         }   
     }
 
@@ -25,15 +27,18 @@ namespace sockpp
     {
         int nbytes = recv(handle_, io->buf, sizeof(io->buf), 0);
         if (nbytes == socket_error) {
-            // something
+            return; /* TODO */
         }
         io->bytes_rx = nbytes;
     }
 
     void socket::tx(io_ctx *const io, const int buf_num)
     {
-        int nbytes = send(handle_, io->buf, sizeof(io->bytes_to_tx));
-        /* TODO: finish the method. */
+        int nbytes = send(handle_, io->buf, sizeof(io->bytes_to_tx), 0);
+        if (nbytes == socket_error) {
+            return; /* TODO */
+        }
+        io->bytes_tx += nbytes;
     }
 
     int socket::get_last_error(void)

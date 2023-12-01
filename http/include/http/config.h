@@ -8,18 +8,21 @@
 namespace http
 {
 
-    /* default network configuration. */
-    constexpr auto &default_listening_reg_name = "localhost";
+    namespace
+    {
 
-    /* default server message parsing configuration. */
-    constexpr unsigned int default_max_req_line_len = 1000;
-    constexpr auto &default_default_uri_scheme = "http";
-    constexpr auto &default_default_req_content_type = "application/json";
+        /* default network configuration. */
+        constexpr auto &default_listening_reg_name = "localhost";
 
-    constexpr auto &default_resource_search_path = "";
+        /* default server message parsing configuration. */
+        constexpr unsigned int default_max_req_line_len = 1000;
+        constexpr auto &default_default_uri_scheme = "http";
+        constexpr auto &default_default_req_content_type = "application/json";
 
-    constexpr auto &default_logger_name = "http";
+        constexpr auto &default_resource_search_path = "";
 
+        constexpr auto &default_logger_name = "http";
+    }
 
     /* stores the configuration options chosen by the server. */
     struct config {

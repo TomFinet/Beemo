@@ -13,7 +13,6 @@ namespace transport {
 
     socket_t socket::accept(void)
     {
-        /* extract first connection on the queue of pending connections for this socket. */
         socket_t conn_handle = WSAAccept(handle_, nullptr, nullptr, nullptr, 0);
         if (conn_handle == invalid_handle) {
             throw std::runtime_error("Failed to accept an incoming connection.");

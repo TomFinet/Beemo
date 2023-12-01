@@ -49,11 +49,14 @@ namespace transport
             std::condition_variable conn_condition_;
 
         #ifdef __linux__
+            struct epoll_events* ready_events_;
             std::unordered_map<socket_t, std::unique_ptr<epoll_event>> events_;
-            std::unordered_map<socket_t, std::unique_ptr<io_ctx>> ongoing_io;
+            std::unordered_map<socket_t, std::unique_ptr<io_ctx>> outgoing_io_;
+            std::mutex events_mutex_;
+            std::mutex outgoing_mutex_;
         #endif
 
-            void register_socket(const socket_t handle, const conn_ctx *const conn); 
+            void register_socket(const socket_t handle, conn_ctx *const conn); 
 
         public:
 

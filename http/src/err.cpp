@@ -28,7 +28,6 @@ namespace http
         conn->res_->add_header("Content-Length", "0");
         conn->res_->add_header("Connection", "close");
         conn->tx(); 
-        conn->close_tx();
     }
 
 }
