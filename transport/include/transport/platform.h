@@ -19,7 +19,7 @@ namespace transport
 #ifdef WIN32
     using socket_t = SOCKET;
     using socklen_t = int;
-    using io_queue_t = void*;
+    using io_queue_t = HANDLE;
 
     constexpr socket_t invalid_handle = INVALID_SOCKET;    
     constexpr int socket_error = SOCKET_ERROR;

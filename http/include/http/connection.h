@@ -30,12 +30,12 @@ namespace http
 
         void rx(void)
         {
-            transport_conn_->do_rx();
+            transport_conn_->request_rx();
         }
 
         void tx(void)
         {
-            transport_conn_->do_tx(res_->to_str());
+            transport_conn_->request_tx(res_->to_str());
         }
 
         void close_rx(void)

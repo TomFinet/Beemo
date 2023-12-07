@@ -35,5 +35,6 @@ namespace http
     extern err_response_handler unsupported_media_type_handler;
     extern err_response_handler misdirected_req_handler;
 
+    extern err_response_handler internal_server_handler; 
     extern err_response_handler not_impl_handler;
 }

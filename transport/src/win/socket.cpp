@@ -7,7 +7,7 @@ namespace transport {
     {
         handle_ = WSASocketW(family, type, protocol, nullptr, 0, WSA_FLAG_OVERLAPPED); 
         if (handle_ == invalid_handle) {
-            throw std::runtime_error("Failed to create the socket.");
+            throw transport_err();
         }
     }
 
@@ -15,7 +15,7 @@ namespace transport {
     {
         socket_t conn_handle = WSAAccept(handle_, nullptr, nullptr, nullptr, 0);
         if (conn_handle == invalid_handle) {
-            throw std::runtime_error("Failed to accept an incoming connection.");
+            throw transport_err();
         }
         return conn_handle;
     }
@@ -27,7 +27,7 @@ namespace transport {
         int err = WSARecv(handle_, &io->buf_desc, buf_num, &nbytes, &flags, (OVERLAPPED*)io, nullptr);
         if (err == socket_error && (ERROR_IO_PENDING != get_last_error())) {
             delete io;
-            throw std::runtime_error("Failed to receive the incoming data.");
+            close();
         }
     }
 
@@ -38,7 +38,7 @@ namespace transport {
                             (OVERLAPPED*)io, nullptr);
         if (err == socket_error && (ERROR_IO_PENDING != get_last_error())) {
             delete io;
-            throw std::runtime_error("Failed to send the bytes in the buffer.");
+            close();
         }
     }
 
@@ -56,7 +56,7 @@ namespace transport {
 
         int err = shutdown(handle_, SD_SEND);
         if (err == socket_error) {
-            throw std::runtime_error("Failed to close the send end of the connection.");
+            close();
         }
     }
 

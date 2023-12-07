@@ -18,11 +18,11 @@ namespace utils
         std::mutex m;
         std::condition_variable cv;
 
-        std::async(std::launch::async, [&cv](F&& f)
+        std::async(std::launch::async, [&cv](F&& f, Args&&... args)
         {
             std::forward<F>(f)(std::forward<Args>(args)...);
             cv.notify_one();
-        }, f);
+        }, f, args);
 
         {
             std::unique_lock<std::mutex> lock(m);

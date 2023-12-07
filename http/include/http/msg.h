@@ -117,7 +117,7 @@ namespace http
             : version{1, 1}, status_code(status_code), reason(reason) { }
 
 
-        inline void add_header(const std::string &header, const std::string &value)
+        void add_header(const std::string &header, const std::string &value)
         {
             fields[header] = value;
         }

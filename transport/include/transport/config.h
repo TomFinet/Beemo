@@ -25,7 +25,7 @@ namespace transport
 
     struct config {
         /* Maximum number of ms spent handling a request before a timeout.
-        DOING. */
+        DONE. TESTING NEEDED. */
         unsigned int processing_timeout_sec = default_processing_timeout_sec;
 
         /* Maximum number of ms a connection can exist idle before it is closed. */

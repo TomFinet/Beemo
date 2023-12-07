@@ -20,42 +20,44 @@ namespace transport
         
         queue_handle_ = CreateIoCompletionPort(INVALID_HANDLE_VALUE, nullptr, 0, nproc);
         if (queue_handle_ == nullptr) {
-            throw std::runtime_error("Failed to create io queue.");
+            throw transport_err();
         }
     }
 
     void server::register_socket(const socket_t handle, conn_ctx *const conn)
     {
-        queue_handle_ = CreateIoCompletionPort((HANDLE)handle, queue_handle_, (DWORD_PTR)conn, 0);
-        if (queue_handle_ == nullptr) {
-            throw std::runtime_error("Failed to add socket to completion port.");
+        io_queue_t res = CreateIoCompletionPort((HANDLE)handle, queue_handle_, (DWORD_PTR)conn, 0);
+        if (res == nullptr) {
+            throw transport_err(skt_reg_fail);
         }
+        queue_handle_ = res;
     }
 
     /* Per thread event completion loop. */
-    void server::dequeue(void)
+    void server::run_event_loop(void)
     {
-        unsigned long io_size = 0;
-        conn_ctx *conn = nullptr;
-        io_ctx *io = nullptr;
-
         while (true) {
-            /* attempt to dequeue an IO completion packet from the completion port. */
+            unsigned long io_size = 0;
+            conn_ctx *conn = nullptr;
+            io_ctx *io = nullptr;
+            
             bool success = GetQueuedCompletionStatus(queue_handle_, &io_size, (PULONG_PTR)&conn, (LPOVERLAPPED *)&io, INFINITE);
             if (!success) {
-                throw std::runtime_error("Failed to dequeue from io queue.");
+                logger_->error("Failed to dequeue from completion queue.");
+                continue;
             }
 
             if (conn == nullptr) {
-                return;
+                logger_->error("IO operaton has no associated connection.");
+                continue;
             }
 
             if (io_size == 0) {
                 { 
                     std::unique_lock<std::mutex> lock(conn_mutex_);
-                    conns_.erase(conn->skt->handle());
+                    conns_.erase(conn->skt_handle());
                 }
-                on_client_close(conn->skt->handle());
+                on_client_close(conn->skt_handle());
                 continue;
             }
 
@@ -66,34 +68,20 @@ namespace transport
                 io->bytes_rx = io_size;
                 conn->on_rx(std::string_view(io->buf, io->bytes_rx));
 
-                cb_with_timeout(on_rx, conn->skt->handle());
+                cb_with_timeout(on_rx, conn->skt_handle());
             }
             else if (io->type == io::type::tx) {
                 io->bytes_tx += io_size;
 
                 if (io->bytes_tx < io->bytes_to_tx) {
                     /* not all bytes tx'ed, resubmit. */
-                    conn->do_tx(std::string_view(io->buf + io->bytes_tx, io->buf_desc.len - io->bytes_tx));
+                    conn->request_tx(std::string_view(io->buf + io->bytes_tx, io->buf_desc.len - io->bytes_tx));
                 }
                 else {
-                    on_tx(conn->skt->handle());
+                    on_tx(conn->skt_handle());
                 }
             }
         }
-    }
-
-    /* Called when the higher layers request rx/tx on their connection.*/
-    void server::rx(conn_ctx *const conn)
-    {
-        io_ctx *const rx_io = new io_ctx(io::type::rx);
-        conn->skt->rx(rx_io, 1);
-    }
-
-    void server::tx(conn_ctx *const conn, std::string_view msg)
-    {
-        io_ctx *const tx_io = new io_ctx(io::type::tx);
-        tx_io->write_buf(msg);
-        conn->skt->tx(tx_io, 1);
-    }
+    } 
     
 }

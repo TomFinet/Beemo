@@ -16,6 +16,7 @@ namespace http
     err_response_handler unsupported_media_type_handler {"Unsupported Media Type", 415};
     err_response_handler misdirected_req_handler {"Misdirected Request", 421};
 
+    err_response_handler internal_server_handler {"Internal Server Error", 500};
     err_response_handler not_impl_handler {"Not Implemented", 501};
 
 

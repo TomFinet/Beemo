@@ -31,7 +31,7 @@ namespace http
     {
         /* TODO: register connection on_rx and on_tx functions to map to the http server handle_rx and handle_tx. */
         add_conn(std::make_shared<connection>(transport_conn));
-        auto conn = connections_[transport_conn->skt->handle()]; 
+        auto conn = connections_[transport_conn->skt_handle()]; 
         conn->rx();
     }
 
@@ -42,7 +42,7 @@ namespace http
         std::shared_ptr<connection> conn = connections_[skt_handle];
 
         if (conn->req_->is_parsing_headers()) {
-            conn->parsed_to_idx_ = parse_headers(conn->transport_conn_->rx_buf, conn->req_.get(), {conn->parsed_to_idx_, &config_});
+            conn->parsed_to_idx_ = parse_headers(conn->transport_conn_->rx_buf(), conn->req_.get(), {conn->parsed_to_idx_, &config_});
         }
 
         if (conn->req_->is_parsing_headers()) {
@@ -56,7 +56,7 @@ namespace http
                 goto err;
             }
             
-            parse_content(conn->transport_conn_->rx_buf.substr(conn->parsed_to_idx_), conn->req_.get());
+            parse_content(conn->transport_conn_->rx_buf().substr(conn->parsed_to_idx_), conn->req_.get());
 
             if (conn->req_->is_parsing_incomplete()) {
                 goto rx; /* Issue a new recv request to get the rest of the message content. */
@@ -89,7 +89,7 @@ namespace http
         std::shared_ptr<connection> conn = connections_[skt_handle];
 
         if (!conn->keep_alive()) {
-            remove_conn(conn->transport_conn_->skt->handle());
+            remove_conn(conn->transport_conn_->skt_handle());
         }
         else {
             conn->rx();
@@ -106,7 +106,7 @@ namespace http
     void server::add_conn(std::shared_ptr<connection> conn)
     {
         std::unique_lock<std::mutex> lock(conn_mutex_);
-        connections_[conn->transport_conn_->skt->handle()] = conn;
+        connections_[conn->transport_conn_->skt_handle()] = conn;
     }
 
     void server::remove_conn(transport::socket_t skt_handle)

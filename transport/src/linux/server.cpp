@@ -49,7 +49,7 @@ namespace transport
     }
 
     /* Per thread event readyness loop. */
-    void server::dequeue(void)
+    void server::run_event_loop(void)
     {
         while (true) {
             int nready = epoll_wait(queue_handle_, ready_events_, max_epoll_events, block_indefinitely);
@@ -94,28 +94,4 @@ namespace transport
         }
     }
     
-    void server::rx(conn_ctx *const conn)
-    {
-        epoll_event* rx_event = events_[skt->handle()].get();
-        rx_event->events &= ~EPOLLOUT;
-        rx_event->events |= EPOLLIN;
-
-        int err = epoll_ctl(queue_handle_, EPOLL_CTL_MOD, conn->skt->handle(), rx_event);
-    }
-
-    void server::tx(conn_ctx *const conn, std::string_view msg)
-    {
-        epoll_event* tx_event = events_[skt->handle()].get();
-        tx_event->events |= EPOLLOUT;
-        tx_event->events &= ~EPOLLIN;
-        
-        std::unique_ptr<io_ctx> tx_io = std::make_unique<io_ctx>(io::type::tx);
-        tx_io->write_buf(msg);
-        {
-            std::unique_lock<std::mutex> lock(outgoing_mutex_);
-            outgoing_io_[skt->handle()] = std::move(tx_io);
-        }
-
-        int err = epoll_ctl(queue_handle_, EPOLL_CTL_MOD, conn->skt->handle(), tx_event);
-    }
 }

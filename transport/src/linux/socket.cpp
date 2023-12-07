@@ -10,7 +10,7 @@ namespace transport
     {
         handle_ = ::socket(family, type, protocol); 
         if (handle_ == invalid_handle) {
-            throw std::runtime_error("Failed to create the transport.");
+            throw transport_err(skt_err);
         }   
     }
 
@@ -18,7 +18,7 @@ namespace transport
     {
         socket_t conn_handle = ::accept(handle_, NULL, NULL);
         if (conn_handle == invalid_handle) {
-            throw std::runtime_error("Failed to accept an incoming connection.");
+            throw transport_err(skt_err);
         }
         return conn_handle;
     }
@@ -27,7 +27,8 @@ namespace transport
     {
         int nbytes = recv(handle_, io->buf, sizeof(io->buf), 0);
         if (nbytes == socket_error) {
-            return; /* TODO */
+            close();
+            return;
         }
         io->bytes_rx = nbytes;
     }
@@ -36,7 +37,8 @@ namespace transport
     {
         int nbytes = send(handle_, io->buf, sizeof(io->bytes_to_tx), 0);
         if (nbytes == socket_error) {
-            return; /* TODO */
+            close();
+            return;
         }
         io->bytes_tx += nbytes;
     }

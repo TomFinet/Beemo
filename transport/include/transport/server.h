@@ -15,6 +15,7 @@
 #include <transport/acceptor.h>
 #include <transport/socket.h>
 #include <transport/config.h>
+#include <transport/err.h>
 
 #include <threadpool/pool.h>
 
@@ -39,6 +40,7 @@ namespace transport
             io_cb_t on_tx;
             io_cb_t on_client_close;
             io_cb_t on_timeout_;
+
             io_queue_t queue_handle_;
 
             acceptor acc_;
@@ -76,51 +78,42 @@ namespace transport
             void start(void)
             {
                 for (int i = 0; i < config_.num_req_handler_threads; i++) {
-                    io_workers->submit([this]()
-                    {
-                        try {
-                            this->dequeue();
-                        }
-                        catch (std::exception &ex) {
-                            this->logger_->error(ex.what());
-                        }
-                    });
+                    io_workers->submit([this]() { this->run_event_loop(); });
                 }
 
-                /* start listening for incoming connections. */
                 acc_.open(config_.listening_ip, config_.listening_port, config_.max_connection_backlog,
-                          config_.max_linger_sec, config_.rx_buf_len);
+                        config_.max_linger_sec, config_.rx_buf_len);
                         
                 while (true) {
-                    {
-                        std::unique_lock<std::mutex> lock(conn_mutex_);
-                        conn_condition_.wait(lock, [this]{ return conns_.size() < config_.max_concurrent_connections; });
+                    try {
+                        {
+                            std::unique_lock<std::mutex> lock(conn_mutex_);
+                            conn_condition_.wait(lock, [this]{ return conns_.size() < config_.max_concurrent_connections; });
+                        }
+                        transport::socket_t skt_handle = acc_.accept();
+                        std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(skt_handle, queue_handle_);
+
+                        logger_->info("Connections: {0:d}", conns_.size());
+
+                        add_conn(conn);
+                        register_socket(skt_handle, conn.get());
+                        logger_->info("New connection established.");
+                        on_conn_(conn);
                     }
-                    transport::socket_t skt_handle = acc_.accept();
-
-                    std::shared_ptr<conn_ctx> conn = std::make_shared<conn_ctx>(skt_handle,
-                        [this](conn_ctx *const conn) { this->rx(conn); },
-                        [this](conn_ctx *const conn, std::string_view msg) { this->tx(conn, msg);
-                    });
-
-                    logger_->info("Connections: {0:d}", conns_.size());
-
-                    add_conn(conn);
-                    register_socket(skt_handle, conn.get());
-                    logger_->info("New connection established.");
-                    on_conn_(conn);
+                    catch (transport_err) {
+                        /* TODO: do some sort of error logging. But ultimately, we don't want
+                        errors relating to one connection to affect other connections. */
+                        logger_->error("Transport error encountered...");
+                    }
                 }
             }
 
-            void dequeue(void);
-
-            void rx(conn_ctx *const conn);
-            void tx(conn_ctx *const conn, std::string_view msg);
+            void run_event_loop(void);
             
             void add_conn(std::shared_ptr<conn_ctx> conn)
             {
                 std::unique_lock<std::mutex> lock(conn_mutex_);
-                conns_[conn->skt->handle()] = conn;
+                conns_[conn->skt_handle()] = conn;
             }
 
             void remove_conn(transport::socket_t skt_handle)

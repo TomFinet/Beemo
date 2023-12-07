@@ -10,7 +10,6 @@ namespace transport
         buf_desc.len = max_rx_len;
     }
 
-
     void io_ctx::write_buf(std::string_view data)
     {
         strncpy_s(buf, data.data(), data.size());

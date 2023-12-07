@@ -2,15 +2,12 @@ In Progress:
 ------------
 
 - write response builder methods, maybe for each request method we have a response builder.
-- add linux support to sockpp. (HIGH PRIORITY) TODAY. Make linux sockets non-blocking, since we will be calling them only when they are ready.
-- integrate configuration struct into server.
+- add linux support to sockpp. (HIGH PRIORITY). Make linux sockets non-blocking, since we will be calling them only when they are ready.
 
 
 Specific Tasks:
 ---------------
 
-- Split config into server and parser configs. Also we have one parser per config.
-- add timeout to request handlers.
 - fix uri error propagation (used to be using exceptions, now using err handler field of req struct).
   also update uri tests to no longer expect exceptions thrown.
 - support compress, deflate, identity and gzip encodings.
@@ -40,3 +37,4 @@ Done:
 -----
 
 - split configuration struct into transport and http configs.
+- add timeout to request handlers.
