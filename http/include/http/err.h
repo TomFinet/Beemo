@@ -11,22 +11,15 @@
 namespace http
 {
 
-    class err_handler {
-        public:
-            /* Don't really want to pass the logger in each time. Maybe make a logger for the errors. */
-            virtual void handle(std::shared_ptr<connection> conn, std::shared_ptr<spdlog::logger> logger) { } 
-    };
-
-    class err_response_handler : public err_handler {
+    class err_response_handler {
         private:
             std::string reason;
             unsigned short status_code;
         public:
             err_response_handler(const std::string &reason, unsigned short status_code) : reason(reason), status_code(status_code) { }
-            void handle(std::shared_ptr<connection> conn, std::shared_ptr<spdlog::logger> logger) override;
+            void handle(std::shared_ptr<connection> conn, std::shared_ptr<spdlog::logger> logger);
     };
 
-    /* to be used as singletons globally, hence the external linkage. */ 
     extern err_response_handler bad_req_handler;
     extern err_response_handler not_found_handler;
     extern err_response_handler timeout_handler;

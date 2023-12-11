@@ -41,35 +41,28 @@ namespace http
 
     enum target_form_t { absolute, authority, asterik, origin };
     
-    /* Indicates what stage of message parsing we are at. */
+    /* Current parsing stage. */
     enum parse_state_t { start_line, headers, content, chunk_trailers, complete };
 
-    /* forward declarations to break circular dependency. */
-    class err_handler;
+    /* Break circular dependency. */
+    class err_response_handler;
 
-    /* A request is not necessarily fully sent in a single transport packet, we need to account for this.
-    If we have not hit the double CLRF yet, then we are still reading header fields.*/
     struct req {
-
         req() : parse_state(start_line), err(nullptr), content_len(0), chunked_content_len(0) { }
 
-        /* metadata to aid with request parsing. */
+        /* Metadata to aid with request parsing. */
         target_form_t target_form;
         parse_state_t parse_state;
-        err_handler *err;
+        err_response_handler *err;
 
-        /* request line */
         struct version version;
         method_t method;
         uri::uri uri;
-
-        /* fields */
         std::unordered_map<std::string, std::string> fields;
 
-        /* parsed fields */
-        /* when content-length is specified in req, this takes its value.
-        if we use chunked encoding, this keeps track of the number of bytes of content
-        we have decoded so far. */
+        /* When content-length is specified in req, this takes its value.
+        If we use chunked encoding, this keeps track of the number of bytes
+        of content we have decoded so far. */
         unsigned int chunked_content_len;
         unsigned int content_len;
         media_type_t media_type;
@@ -79,7 +72,6 @@ namespace http
         std::vector<encoding_t> content_encodings;
         std::vector<encoding_t> transfer_encodings;
 
-        /* body */
         std::string content;
 
         void print(void) const;
@@ -99,17 +91,10 @@ namespace http
     constexpr int status_code_len = 4;
 
     struct response {
-
-        /* metadata */
-
-        /* status line */
         struct version version;
         unsigned short status_code;
         std::string reason; 
-
-        /* fields */
         std::unordered_map<std::string, std::string> fields;
-
         std::string content;
 
         response() : version{1, 1} { }

@@ -1,5 +1,7 @@
 #include <transport/socket.h>
 
+#include <iostream>
+
 
 namespace transport {
 
@@ -22,6 +24,7 @@ namespace transport {
 
     void socket::rx(io_ctx *const io, const int buf_num)
     {
+        std::cout << "rx" << std::endl;
         unsigned long nbytes = 0;
         unsigned long flags = 0;
         int err = WSARecv(handle_, &io->buf_desc, buf_num, &nbytes, &flags, (OVERLAPPED*)io, nullptr);

@@ -1,4 +1,4 @@
-#include <uri/uri_parser.h>
+#include <uri/parser.h>
 
 #include <string>
 #include <stdexcept>
@@ -98,20 +98,25 @@ namespace uri
                       std::string_view::const_iterator scheme_start,
                       std::string_view::const_iterator scheme_end) 
     {
-        if (scheme_start == scheme_end) {
-            throw std::domain_error("Scheme cannot be empty.");
+        std::string scheme;
+        bool pass;
+
+        if (scheme_start == scheme_end ||
+            !std::isalpha(*scheme_start)) {
+            goto err;
         }
 
-        if (!std::isalpha(*scheme_start)) {
-            throw std::domain_error("Scheme must begin with an alphabetic character.");
-        }
-
-        utils::parse_pattern(scheme_start, scheme_end, [](char c)
+        pass = utils::parse_pattern(scheme_start, scheme_end, [](char c)
         {
             return c == '+' || c == '-' || c == '.' || std::isdigit(c) || std::isalpha(c);
         });
-        std::string scheme(scheme_start, scheme_end);
+
+        uri->has_err = !pass;
+        scheme = {scheme_start, scheme_end};
         uri->scheme = scheme;
+        return;
+    err:
+        uri->has_err = true;
     }
 
     void parse_authority(struct uri *const uri,
@@ -153,10 +158,12 @@ namespace uri
                         std::string_view::const_iterator userinfo_start,
                         std::string_view::const_iterator userinfo_end)
     {
-        utils::parse_pattern(userinfo_start, userinfo_end, [](char c)
+        bool pass = utils::parse_pattern(userinfo_start, userinfo_end, [](char c)
         {
             return is_unreserved(c) || is_sub_delimiter(c) || ':';
         });
+        
+        uri->has_err = !pass;
         std::string userinfo(userinfo_start, userinfo_end);
         uri->userinfo = userinfo;
     }
@@ -165,32 +172,41 @@ namespace uri
                     std::string_view::const_iterator host_start,
                     std::string_view::const_iterator host_end)
     {
+        std::string host;
+        bool pass;
+
         if (host_start == host_end) {
-            throw std::domain_error("Host cannot be empty.");
+            goto err;
         }
 
         if (*host_start == '[') {
             if (*(host_end - 1) != ']') {
-                throw std::domain_error("IP literal must end with ']'.");
+                goto err;
             }
 
             if (std::tolower(*(host_start + 1)) == 'v') {
                 parse_ipvfuture(uri, host_start + 1, host_end - 1);
             }
             else {
-                std::string host(host_start + 1, host_end - 1); 
+                host = {host_start + 1, host_end - 1}; 
                 uri->ipv6 = host;
             }
         }
         else {
-            utils::parse_pattern(host_start, host_end, [](char c)
+            pass = utils::parse_pattern(host_start, host_end, [](char c)
             {
                 return is_unreserved(c) || is_sub_delimiter(c);
             });
-            std::string host(host_start, host_end);
+            uri->has_err = !pass;
+            host = {host_start, host_end};
             uri->ipv4 = host;
             uri->reg_name = host;
         }
+        return;
+
+    err:
+        uri->has_err = true;
+        return;
     }
 
     /* "v" 1*HEXDIG "." 1*( unreserved | sub-delims | ":" ) */
@@ -198,54 +214,67 @@ namespace uri
                          std::string_view::const_iterator ipvfuture_start,
                          std::string_view::const_iterator ipvfuture_end)
     {
+        std::string ipvfuture_str(ipvfuture_start, ipvfuture_end); 
+        size_t dot_pos; 
+        std::string_view::const_iterator version_end;
+        std::string version;
+        std::string ipvfuture;
+        bool pass;
+
         if (ipvfuture_start == ipvfuture_end) {
-            throw std::domain_error("IPvFuture cannot be empty.");
+            goto err;
         }
 
         if (*ipvfuture_start != 'v') {
-            throw std::domain_error("IPvFuture must start with 'v'.");
+            goto err;
         }
 
-        std::string ipvfuture_str(ipvfuture_start, ipvfuture_end); 
-        size_t dot_pos = ipvfuture_str.find('.');
+        dot_pos = ipvfuture_str.find('.');
         if (dot_pos == std::string::npos) {
-            throw std::domain_error("IPvFuture must delimite its version number by a '.' .");
+            goto err;
         }
 
-        auto version_end = ipvfuture_start + dot_pos;
-        utils::parse_pattern(ipvfuture_start + 1, version_end, [](unsigned char c)
+        version_end = ipvfuture_start + dot_pos;
+        pass = utils::parse_pattern(ipvfuture_start + 1, version_end, [](unsigned char c)
         {
             return std::isxdigit(c);
         });
-        std::string version(ipvfuture_start + 1, version_end);
+        version = {ipvfuture_start + 1, version_end};
 
         if (version.empty()) {
-            throw std::domain_error("IPvFuture version number cannot be empty.");
+            goto err;
         }
 
         uri->future_version = version;
 
-        utils::parse_pattern(version_end + 1, ipvfuture_end, [](char c)
+        pass = pass && utils::parse_pattern(version_end + 1, ipvfuture_end, [](char c)
         {
             return is_unreserved(c) || is_sub_delimiter(c) ||  c == ':';            
         });
-        std::string ipvfuture(version_end + 1, ipvfuture_end);
+        uri->has_err = !pass;
+        ipvfuture = {version_end + 1, ipvfuture_end};
 
         if (ipvfuture.empty()) {
-            throw std::domain_error("IPvFuture must have an ip address.");
+            goto err;
         }
         
         uri->ipvfuture = ipvfuture;
+        return;
+    err:
+        uri->has_err = true;
+        return;
     }
 
     void parse_port(struct uri *const uri,
                     std::string_view::const_iterator port_start,
                     std::string_view::const_iterator port_end) 
     {
-        utils::parse_pattern(port_start, port_end, [](unsigned char c)
+        bool pass = utils::parse_pattern(port_start, port_end, [](unsigned char c)
         {
             return std::isdigit(c);
         });
+        uri->has_err = !pass;
+
         std::string port(port_start, port_end);
         if (port.empty()) {
             uri->port = no_port;
@@ -266,7 +295,8 @@ namespace uri
 
         while (it != path_end) {
             if (*it != '/') {
-                throw std::domain_error("Path must start with a '/'.");
+                uri->has_err = true;
+                return;
             }
 
             it++;
@@ -274,7 +304,8 @@ namespace uri
             bool seg_exists = false;
             while (it != path_end && *it != '/') {
                 if (!is_pchar(*it)) {
-                    throw std::domain_error("Path segment has invalid character.");
+                    uri->has_err = true;
+                    return;
                 }
 
                 seg_exists = true;
@@ -282,7 +313,8 @@ namespace uri
             }
 
             if (!seg_exists && it != path_end) {
-                throw std::domain_error("Path segment is missing.");
+                uri->has_err = true;
+                return;
             }
         }
 
@@ -294,10 +326,11 @@ namespace uri
                      std::string_view::const_iterator query_start,
                      std::string_view::const_iterator query_end)
     {
-        utils::parse_pattern(query_start, query_end, [](char c)
+        bool pass = utils::parse_pattern(query_start, query_end, [](char c)
         {
             return is_pchar(c) || c == '/' || c == '?';
         });
+        uri->has_err = !pass;
         std::string query(query_start, query_end);
         uri->query = query;
     }

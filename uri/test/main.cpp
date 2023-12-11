@@ -3,7 +3,7 @@
 #include <stdexcept>
 
 #include <uri/uri.h>
-#include <uri/uri_parser.h>
+#include <uri/parser.h>
 
 int main()
 {

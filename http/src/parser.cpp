@@ -1,9 +1,11 @@
 #include <http/parser.h>
 #include <http/encoding.h>
+#include <http/config.h>
 
-#include <uri/uri_parser.h>
+#include <uri/parser.h>
 
 #include <unordered_map>
+#include <iostream>
 
 
 namespace
@@ -36,7 +38,6 @@ namespace
     }
 
 }
-
 
 namespace http
 {
@@ -108,6 +109,7 @@ namespace http
         }
         req->method = static_cast<method_t>(http_keyword_map::keyword_val(req_line.substr(0, method_end)));
         if (req->method == method_invalid) {
+            std::cout << req->method << std::endl;
             goto err_not_impl;
         }
 
@@ -157,17 +159,29 @@ namespace http
             req->target_form = http::authority;
             uri::parse_uri(&req->uri, req_target, uri::flag_authority);
         }
+
+        if (req->uri.has_err) {
+            req->err = &bad_req_handler;
+        }
     }
 
     void parse_version(std::string_view version, req *const req)
     {
         if (version.size() != version_len) {
-            req->err = &bad_req_handler;
-            return;
+            goto bad_req;
         }
 
         req->version.major = std::stoi(static_cast<std::string>(version.substr(version_major_start, 1)));
         req->version.minor = std::stoi(static_cast<std::string>(version.substr(version_minor_start, 1)));
+
+        if (req->version.major != supported_http_major_version ||
+            req->version.minor != supported_http_minor_version) {
+            goto bad_req;
+        }
+        return;
+
+    bad_req:
+        req->err = &bad_req_handler;
     }
 
     void parse_field_line(std::string_view field_line, req *const req)
@@ -219,6 +233,10 @@ namespace http
                 uri::parse_uri(&req->uri, host_val, uri::flag_scheme | uri::flag_authority);
                 break;
         }
+
+        if (req->uri.has_err) {
+            req->err = &bad_req_handler;
+        }
     }
     
     void parse_content_len(struct req *const req)
@@ -232,6 +250,7 @@ namespace http
         {
             return std::isdigit(c);
         });
+
         if (content_len_view.empty() || !is_valid) {
             req->err = &bad_req_handler;
             return;
@@ -241,9 +260,6 @@ namespace http
         req->content_len = std::stoi(content_len);
     }
 
-    /* content-type defines the media type and format used for the
-    message's representation data (content, or whatever uri points to).
-    It may also specify the character encoding used. */
     void parse_content_type(req *const req)
     {
         std::string_view content_type;
@@ -288,16 +304,26 @@ namespace http
         // parse the connection field. connection is kept alive by default, unless the connection: close is provided here.
     }
 
-    /* The request headers have been parsed and validated by the time this is called.
-    The content string view is not guaranteed to encompass all the
-    content (the rx buffer may be smaller than rx data, transport receive may have
-    notified us of rx packets before all where received.) */
-    /* TODO: this may be called multiple times due partial requests. We don't want to parse header fields each time. */
-    void parse_content(std::string_view raw_content, req *const req)
+    void parse_content(std::string_view raw_content, req *const req, const struct config &config)
     {
+        bool has_transfer_encodings;
+        bool has_content_length;
+
+        if (req->uri.port != config.transport.listening_port || 
+           (req->uri.ipv4 != config.transport.listening_ip &&
+            req->uri.reg_name != config.listening_reg_name)) {
+            goto misdirected_req;
+        }
+        
+        if (req->fields[host_header_token].empty() ||
+            !req->uri.scheme.empty() && req->uri.scheme != config.default_uri_scheme ||
+            !req->uri.userinfo.empty()) {
+            goto bad_req;
+        }
+
         /* codings applied for transfer. */
         req->transfer_encodings = parse_field_list<encoding_t>(req, transfer_encoding_token, &not_impl_handler);
-        /* codings listed here are characteristic of the representation. all other metadata about the represenation is about the coded form. */
+        /* codings listed here are characteristic of the representation. */
         req->content_encodings = parse_field_list<encoding_t>(req, content_encoding_token, &bad_req_handler);
 
         parse_content_len(req);
@@ -307,15 +333,14 @@ namespace http
             return;
         }
 
-        bool has_transfer_encodings = !req->transfer_encodings.empty();
-        bool has_content_length = req->fields.contains(content_length_token);
+        has_transfer_encodings = !req->transfer_encodings.empty();
+        has_content_length = req->fields.contains(content_length_token);
 
         if (has_transfer_encodings) {
             if (has_content_length) {
                 goto bad_req; /* cannot have content-length and transfer-encoding. */
             }
 
-            /* TODO: would be more efficient to do this as we are parsing the transfer encodings. */
             size_t chunked_cnt = std::count(req->transfer_encodings.begin(), req->transfer_encodings.end(), chunked);
             if (chunked_cnt > 1 || (chunked_cnt == 1 && req->transfer_encodings.back() != chunked)) {
                 goto bad_req;
@@ -348,6 +373,9 @@ namespace http
         return;
     bad_req:
         req->err = &bad_req_handler;
+        return;
+    misdirected_req:
+        req->err = &misdirected_req_handler;
         return;
     len_required:     
         req->err = &len_required_handler;

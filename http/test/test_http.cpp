@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <string_view>
-#include <stdexcept>
-#include <memory>
 
 #include <http/msg.h>
 #include <http/config.h>
@@ -19,16 +17,18 @@ TEST(HttpTest, Parse_Valid_Headers)
         "\r\n"
         "Test body...";
 
-    std::unique_ptr<http::req> req = std::make_unique<http::req>();
-    http::parse_headers(get, req.get(), {0, {}});
+    http::req req;
+    http::parse_headers(get, &req, {0, {}});
 
-    ASSERT_EQ(req->method, http::get);
-    ASSERT_EQ(req->uri.path, "/search");
-    ASSERT_EQ(req->uri.query, "?q=warhammer");
-    ASSERT_EQ(req->version.major, 1);
-    ASSERT_EQ(req->version.minor, 1);
-    ASSERT_EQ(req->fields["transfer-encoding"], "chunked");
-    ASSERT_EQ(req->fields["connection"], "keep-alive");
+    ASSERT_FALSE(req.uri.has_err);
+    ASSERT_TRUE(req.err == nullptr);
+    ASSERT_EQ(req.method, http::get);
+    ASSERT_EQ(req.uri.path, "/search");
+    ASSERT_EQ(req.uri.query, "?q=warhammer");
+    ASSERT_EQ(req.version.major, 1);
+    ASSERT_EQ(req.version.minor, 1);
+    ASSERT_EQ(req.fields["transfer-encoding"], "chunked");
+    ASSERT_EQ(req.fields["connection"], "keep-alive");
 }
 
 TEST(HttpTest, AsterikForm)
@@ -82,13 +82,18 @@ TEST(HttpTest, ContentType)
 
 TEST(HttpTest, ContentLength)
 {
+    http::config config;
     http::req req;
     req.fields["content-length"] = "10";    
     http::parse_content_len(&req);
     
     ASSERT_EQ(req.content_len, 10);
     
-    http::parse_content("howdy ho!!", &req);
+    req.uri.port = config.transport.listening_port;
+    req.uri.reg_name = config.listening_reg_name;
+    req.uri.scheme = "http";
+    req.fields["host"] = "google.com";
+    http::parse_content("howdy ho!!", &req, config);
 
     ASSERT_EQ(req.content, "howdy ho!!");
 
@@ -157,13 +162,16 @@ TEST(HttpTest, Chunked)
         "Host: www.miniwargamming.com\r\n"
         "\r\n";
 
+    http::config config;
     http::req req;
-    http::parse_headers(chunked_post, &req, {0, {}});
+    http::parse_headers(chunked_post, &req, {0, &config});
 
+    ASSERT_FALSE(req.uri.has_err);
     ASSERT_FALSE(req.has_err());
     ASSERT_EQ(req.fields[http::transfer_encoding_token], "chunked");
     
-    http::parse_content(content, &req);
+    http::parse_content(content, &req, config);
+    ASSERT_TRUE(false);
 
     ASSERT_FALSE(req.has_err());
     ASSERT_EQ(req.transfer_encodings.size(), 1); 

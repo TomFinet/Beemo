@@ -1,5 +1,5 @@
 set(SRCS
-  src/uri_parser.cpp
+  src/parser.cpp
 )
 
 add_library(uri STATIC ${SRCS})

@@ -5,7 +5,7 @@
 #include <stdexcept>
 
 #include <uri/uri.h>
-#include <uri/uri_parser.h>
+#include <uri/parser.h>
 
 TEST(UriTest, Scheme)
 {
@@ -17,13 +17,16 @@ TEST(UriTest, Scheme)
     ASSERT_EQ(uri.scheme, scheme);
 
     scheme = "3dfs";
-    ASSERT_THROW(parse_scheme(&uri, scheme.begin(), scheme.end()), std::domain_error);
+    uri::parse_scheme(&uri, scheme.begin(), scheme.end());
+    ASSERT_TRUE(uri.has_err);
 
     scheme = ""; 
-    ASSERT_THROW(uri::parse_scheme(&uri, scheme.begin(), scheme.end()), std::domain_error);
+    uri::parse_scheme(&uri, scheme.begin(), scheme.end());
+    ASSERT_TRUE(uri.has_err);
 
     scheme = "{dsf}";
-    ASSERT_THROW(uri::parse_scheme(&uri, scheme.begin(), scheme.end()), std::domain_error);
+    uri::parse_scheme(&uri, scheme.begin(), scheme.end());
+    ASSERT_TRUE(uri.has_err);
 }
 
 TEST(UriTest, Host)
@@ -50,7 +53,8 @@ TEST(UriTest, Host)
     ASSERT_EQ(uri.ipv4, "127.0.0.1");
 
     host = "[vfz.d3:232]";
-    ASSERT_THROW(uri::parse_host(&uri, host.begin(), host.end()), std::domain_error);
+    uri::parse_host(&uri, host.begin(), host.end());
+    ASSERT_TRUE(uri.has_err);
 }
 
 TEST(UriTest, Port)
@@ -67,7 +71,8 @@ TEST(UriTest, Port)
     ASSERT_EQ(uri.port, uri::no_port);
     
     port = "80a";
-    ASSERT_THROW(uri::parse_port(&uri, port.begin(), port.end()), std::domain_error);
+    uri::parse_port(&uri, port.begin(), port.end());
+    ASSERT_TRUE(uri.has_err);
 }
 
 TEST(UriTest, Path)
@@ -96,7 +101,8 @@ TEST(UriTest, Path)
     ASSERT_EQ(uri.path, path);
 
     path = "//a";
-    ASSERT_THROW(uri::parse_path(&uri, path.begin(), path.end()), std::domain_error);
+    uri::parse_path(&uri, path.begin(), path.end());
+    ASSERT_TRUE(uri.has_err);
 }
 
 TEST(UriTest, Query)
@@ -109,5 +115,6 @@ TEST(UriTest, Query)
     ASSERT_EQ(uri.query, query);
 
     query = "?x#y";
-    ASSERT_THROW(uri::parse_query(&uri, query.begin(), query.end()), std::domain_error);
+    uri::parse_query(&uri, query.begin(), query.end());
+    ASSERT_TRUE(uri.has_err);
 }

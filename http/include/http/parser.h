@@ -30,7 +30,7 @@ namespace http {
     void parse_content_type(req *const req);
     void parse_connection(struct req *const req);
     
-    void parse_content(std::string_view raw_content, req *const req);
+    void parse_content(std::string_view raw_content, req *const req, const struct config &config);
     
     template<typename T>
     std::vector<T> parse_field_list(req *const req, const std::string &field_name, err_response_handler *const err_handler)

@@ -10,6 +10,7 @@
 namespace http
 {
 
+    /* TODO: this hash function sucks, and will incurr more collisions than others. */
     struct req_id {
         std::string path;
         method_t method;
@@ -27,10 +28,8 @@ namespace http
         }
     };
 
+    /* TODO: modernise this. */
     typedef std::string (*req_handler_t)(struct req *);
-
-    /* the first step to routing is to ensure the message is semantically correct. */ 
-    void validate(req *const req, const struct config &config);
 
     std::unique_ptr<struct response> route_to_resource_handler(req *const req);
 

@@ -2,6 +2,7 @@
 #include <transport/io_ctx.h>
 
 #include <stdlib.h>
+#include <stdexcept>
 #include <string_view>
     
 
@@ -77,7 +78,9 @@ namespace transport
                     try {
                         on_rx(conn->skt->handle());
                     }
-                    catch ()
+                    catch (std::exception) {
+
+                    }
                 }
                 else if (event.events & EPOLLOUT) {
                     io_ctx *const tx_io = outgoing_io_[conn->skt->handle()].get();

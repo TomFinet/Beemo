@@ -6,6 +6,7 @@
 namespace uri {
 
     struct uri {
+        bool has_err;
         bool asterik;
         std::string scheme;
         std::string userinfo;
