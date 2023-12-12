@@ -37,7 +37,7 @@ namespace http
     void server::handle_rx(transport::socket_t skt_handle)
     {
         std::shared_ptr<connection> conn = connections_[skt_handle];
-        logger_->info(conn->transport_conn_->rx_buf());
+
         if (conn->req_->is_parsing_headers()) {
             conn->parsed_to_idx_ = parse_headers(conn->transport_conn_->rx_buf(), conn->req_.get(), {conn->parsed_to_idx_, &config_});
         }
@@ -105,6 +105,7 @@ namespace http
     {
         std::unique_lock<std::mutex> lock(conn_mutex_);
         connections_.erase(skt_handle);
+        logger_->info("Connection closed: {0:d}", connections_.size());
     }
 
 }

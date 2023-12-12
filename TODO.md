@@ -9,6 +9,7 @@ In Progress:
 Specific Tasks:
 ---------------
 
+- add a connection idle timeout which when triggered closes the connection.
 - support compress, deflate, identity and gzip encodings.
 - write test to stress number of concurrent connections.
 - support more http headers.

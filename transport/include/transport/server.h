@@ -82,7 +82,7 @@ namespace transport
                 }
 
                 acc_.open(config_.listening_ip, config_.listening_port, config_.max_connection_backlog,
-                        config_.max_linger_sec, config_.rx_buf_len);
+                        config_.max_linger_sec, config_.rx_buf_len, config_.idle_connection_timeout_ms);
                         
                 while (true) {
                     try {

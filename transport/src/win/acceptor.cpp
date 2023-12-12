@@ -5,7 +5,8 @@ namespace transport
 {
 
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,
-                        const unsigned short linger_sec, const unsigned int rx_buf_len)
+                        const unsigned short linger_sec, const unsigned int rx_buf_len,
+                        const unsigned int rx_idle_timeout)
     {
         sock_.create_handle(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 
@@ -25,6 +26,7 @@ namespace transport
         sock_.set_options(SOL_SOCKET, SO_LINGER, (char *)&l, sizeof(l));
         sock_.set_options(SOL_SOCKET, SO_KEEPALIVE, (char *)&one, sizeof(one)); /* not sure if needed. */
         sock_.set_options(SOL_SOCKET, SO_RCVBUF, (char *)&rx_buf_len, sizeof(rx_buf_len));
+        sock_.set_options(SOL_SOCKET, SO_RCVTIMEO, (char*)&rx_idle_timeout, sizeof(rx_idle_timeout));
     }
 
 }

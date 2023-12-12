@@ -22,4 +22,4 @@ async def test_concurrent_requests(number_requests):
 
 
 if __name__ == "__main__":
-    asyncio.run(test_concurrent_requests(3))
+    asyncio.run(test_concurrent_requests(1))

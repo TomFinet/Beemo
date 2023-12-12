@@ -23,7 +23,8 @@ namespace transport
              * changes the socket's state to listening.
              */
             void open(const std::string &ip, const int port, const unsigned int backlog,
-                      const unsigned short linger_sec, const unsigned int rx_buf_len);
+                      const unsigned short linger_sec, const unsigned int rx_buf_len,
+                      const unsigned int rx_idle_timeout);
 
             /**
              * Accepts incoming connections.
