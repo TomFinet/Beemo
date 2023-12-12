@@ -5,12 +5,11 @@
 #include <uri/parser.h>
 
 #include <unordered_map>
-#include <iostream>
+#include <functional>
 
 
 namespace
 {
-
     constexpr auto space = ' ';
     constexpr auto crlf = "\r\n"; 
 
@@ -19,24 +18,16 @@ namespace
     constexpr int version_minor_start = 7;
 
     /* maps encoding_t to the corresponding encoding class. */
-    const std::unordered_map<http::encoding_t, http::encoding::encoded*> encoding_map
+    /* TODO: surely this can be constexpr. */
+    const std::unordered_map<http::encoding_t, http::decoder_func_t> decode_map
     {
-        {http::invalid_encoding, new http::encoding::encoded()},
-        {http::chunked, new http::encoding::chunked()},
-        {http::identity, new http::encoding::identity()},
-        {http::gzip, new http::encoding::gzip()},
-        {http::compress, new http::encoding::compress()},
-        {http::deflate, new http::encoding::deflate()}
+        {http::invalid_encoding, http::encoding::decode},
+        {http::chunked, http::encoding::chunked::decode},
+        {http::identity, http::encoding::identity::decode},
+        {http::gzip, http::encoding::gzip::decode},
+        {http::compress, http::encoding::compress::decode},
+        {http::deflate, http::encoding::deflate::decode}
     };
-
-    http::encoding::encoded* to_encoding_class(http::encoding_t enc)
-    {
-        if (!encoding_map.contains(enc)) {
-            return encoding_map.at(http::invalid_encoding);
-        }
-        return encoding_map.at(enc);
-    }
-
 }
 
 namespace http
@@ -109,7 +100,6 @@ namespace http
         }
         req->method = static_cast<method_t>(http_keyword_map::keyword_val(req_line.substr(0, method_end)));
         if (req->method == method_invalid) {
-            std::cout << req->method << std::endl;
             goto err_not_impl;
         }
 
@@ -347,7 +337,7 @@ namespace http
             }
 
             for (encoding_t enc : req->transfer_encodings) {
-                bool fully_decoded = to_encoding_class(enc)->decode(raw_content, req); 
+                bool fully_decoded = decode_map.at(enc)(raw_content, req); 
                 if (!fully_decoded) {
                     goto incomplete_content;
                 }
@@ -364,7 +354,7 @@ namespace http
         }
         
         for (encoding_t enc : req->content_encodings) {
-            to_encoding_class(enc)->decode(req->content, req); 
+            decode_map.at(enc)(req->content, req); 
         }
 
         req->parse_state = complete;

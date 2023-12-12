@@ -37,7 +37,7 @@ namespace http
     void server::handle_rx(transport::socket_t skt_handle)
     {
         std::shared_ptr<connection> conn = connections_[skt_handle];
-
+        logger_->info(conn->transport_conn_->rx_buf());
         if (conn->req_->is_parsing_headers()) {
             conn->parsed_to_idx_ = parse_headers(conn->transport_conn_->rx_buf(), conn->req_.get(), {conn->parsed_to_idx_, &config_});
         }
@@ -67,7 +67,8 @@ namespace http
         return;
 
     err:
-        conn->req_->err->handle(conn, logger_);
+        logger_->error("Error {0:d} {1}", conn->req_->err->status_code(), conn->req_->err->reason());
+        conn->req_->err->handle(conn);
         conn->close_tx();
         return;
     rx:
@@ -89,8 +90,9 @@ namespace http
     void server::handle_timeout(transport::socket_t skt_handle)
     {
         std::shared_ptr<connection> conn = connections_[skt_handle];
-        timeout_handler.handle(conn, logger_);
+        timeout_handler.handle(conn);
         conn->close_tx();
+        logger_->error("Timeout on skt {0:d}", skt_handle);
     }
 
     void server::add_conn(std::shared_ptr<connection> conn)

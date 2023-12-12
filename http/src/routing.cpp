@@ -33,9 +33,11 @@ namespace http
             case get:
                 response->status_code = 200;
                 response->reason = "OK";
+                break;
             case post:
                 response->status_code = 201;
                 response->reason = "Created";
+                break;
         }
         response->add_header("Content-Length", std::to_string(response->content.size()));
         return std::move(response);

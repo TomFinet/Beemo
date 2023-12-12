@@ -28,22 +28,22 @@ namespace http
 
         ~connection() { }
 
-        void rx(void)
+        void rx(void) const
         {
             transport_conn_->request_rx();
         }
 
-        void tx(void)
+        void tx(void) const
         {
             transport_conn_->request_tx(res_->to_str());
         }
 
-        void close_rx(void)
+        void close_rx(void) const
         {
             transport_conn_->close_rx();
         }
         
-        void close_tx(void)
+        void close_tx(void) const
         {
             transport_conn_->close_tx();
         }
@@ -57,7 +57,7 @@ namespace http
             req_.swap(clear_req);
         }
 
-        bool keep_alive(void)
+        bool keep_alive(void) const
         {
             return transport_conn_->keep_alive();
         }

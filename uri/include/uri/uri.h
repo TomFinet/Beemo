@@ -18,5 +18,7 @@ namespace uri {
         int port;
         std::string path;
         std::string query;
+
+        uri() : has_err(false) { }
     };
 }

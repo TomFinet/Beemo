@@ -21,6 +21,7 @@ General Improvements:
 - refactor code (lot's of raw pointers used, probably lots of constexpr to be added, other modern c++ improvements).
 - profile the code.
 - improve code consistency: use struct keyword, end member variables with _ .
+- add clang tidy tools to format the code.
 
 Potential Bugs:
 ---------------

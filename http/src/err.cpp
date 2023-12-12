@@ -20,12 +20,11 @@ namespace http
     err_response_handler not_impl_handler {"Not Implemented", 501};
 
 
-    void err_response_handler::handle(std::shared_ptr<connection> conn, std::shared_ptr<spdlog::logger> logger)
+    void err_response_handler::handle(std::shared_ptr<connection> conn) const
     {
-        logger->error("Error {0:d} {1}", status_code, reason);
         conn->reset_for_next();
-        conn->res_->status_code = status_code;
-        conn->res_->reason = reason;
+        conn->res_->status_code = status_code_;
+        conn->res_->reason = reason_;
         conn->res_->add_header("Content-Length", "0");
         conn->res_->add_header("Connection", "close");
         conn->tx(); 

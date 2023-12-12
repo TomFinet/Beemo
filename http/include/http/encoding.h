@@ -1,49 +1,42 @@
 #pragma once
 
 #include <string_view>
+#include <functional>
 
 #include <http/msg.h>
 
 
 namespace http
 {
+    using decoder_func_t = std::function<bool(std::string_view, req *const)>;
 
     namespace encoding
     {
+        bool decode(std::string_view raw_content, req *const request);
 
-        /* TODO: since encodings will only every have two functions (encode, decode).
-        It is likely better to use inline function pointers to the functions instead of virtual tables.
-        Furthermore, these classes are singletons, and so we have one instance with 2 virtual functions. */
-        class encoded {
-            public:
-                /* returns true or false depending on if decoding has completed or not. */
-                virtual bool decode(std::string_view raw_content, req *const request) const;
-        };
+        namespace chunked
+        {
+            bool decode(std::string_view raw_content, req *const request);
+        }
 
-        class chunked : public encoded {
-            public:
-                bool decode(std::string_view raw_content, req *const request) const override;
-        };
+        namespace identity
+        {
+            bool decode(std::string_view content, req *const request);
+        }
 
-        class identity : public encoded {
-            public:
-                bool decode(std::string_view content, req *const request) const override;
-        };
+        namespace compress
+        {
+            bool decode(std::string_view content, req *const request);
+        }
 
-        class compress : public encoded {
-            public:
-                bool decode(std::string_view content, req *const request) const override;
-        };
+        namespace deflate
+        {
+            bool decode(std::string_view content, req *const request);
+        }
 
-        class deflate : public encoded {
-            public:
-                bool decode(std::string_view content, req *const request) const override;
-        };
-
-        class gzip : public encoded {
-            public:
-                bool decode(std::string_view content, req *const request) const override;
-        };
-
+        namespace gzip
+        {
+            bool decode(std::string_view content, req *const request);
+        }
     }
 }

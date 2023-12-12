@@ -2,8 +2,6 @@
 
 #include <http/connection.h>
 
-#include <spdlog/spdlog.h>
-
 #include <string>
 #include <memory>
 
@@ -13,11 +11,22 @@ namespace http
 
     class err_response_handler {
         private:
-            std::string reason;
-            unsigned short status_code;
+            std::string reason_;
+            unsigned short status_code_;
         public:
-            err_response_handler(const std::string &reason, unsigned short status_code) : reason(reason), status_code(status_code) { }
-            void handle(std::shared_ptr<connection> conn, std::shared_ptr<spdlog::logger> logger);
+            constexpr err_response_handler(const std::string &reason, const unsigned short status_code)
+                : reason_(reason), status_code_(status_code) { }
+            void handle(std::shared_ptr<connection> conn) const;
+
+            const unsigned short status_code(void) const
+            {
+                return status_code_;
+            }
+
+            const std::string& reason(void) const
+            {
+                return reason_;
+            }
     };
 
     extern err_response_handler bad_req_handler;

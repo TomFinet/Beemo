@@ -17,8 +17,9 @@ TEST(HttpTest, Parse_Valid_Headers)
         "\r\n"
         "Test body...";
 
+    http::config config;
     http::req req;
-    http::parse_headers(get, &req, {0, {}});
+    http::parse_headers(get, &req, {0, &config});
 
     ASSERT_FALSE(req.uri.has_err);
     ASSERT_TRUE(req.err == nullptr);
@@ -159,7 +160,7 @@ TEST(HttpTest, Chunked)
         "Connection: keep-alive\r\n"
         "Transfer-Encoding: chunked\r\n"
         "Content-Type: text/json\r\n"
-        "Host: www.miniwargamming.com\r\n"
+        "Host: localhost:9001\r\n"
         "\r\n";
 
     http::config config;
@@ -171,7 +172,6 @@ TEST(HttpTest, Chunked)
     ASSERT_EQ(req.fields[http::transfer_encoding_token], "chunked");
     
     http::parse_content(content, &req, config);
-    ASSERT_TRUE(false);
 
     ASSERT_FALSE(req.has_err());
     ASSERT_EQ(req.transfer_encodings.size(), 1); 

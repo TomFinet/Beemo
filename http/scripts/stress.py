@@ -8,7 +8,7 @@ from aiohttp import ClientSession, ClientConnectorError
 
 async def make_request(session, **kwargs):
     try:
-        resp = await session.request(method="GET", url="localhost:9001", **kwargs)
+        resp = await session.request(method="GET", url="http://localhost:9001", **kwargs)
     except ClientConnectorError:
         return 1
     return 0
