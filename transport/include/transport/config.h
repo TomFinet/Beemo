@@ -17,7 +17,7 @@ namespace transport
         constexpr int default_num_req_handler_threads = 8;
         constexpr unsigned int default_rx_buf_len = 1024;
 
-        constexpr unsigned int default_listening_port = 9001;
+        constexpr unsigned int default_listening_port = 9007;
         constexpr auto &default_listening_ip = "127.0.0.1";
 
         constexpr auto &default_logger_name = "transport";

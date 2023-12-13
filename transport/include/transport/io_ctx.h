@@ -9,7 +9,7 @@
 
 namespace transport
 {
-    constexpr int max_rx_len = 150;
+    constexpr unsigned int default_buf_len = 2000;
 
     namespace io
     {
@@ -24,7 +24,8 @@ namespace transport
         WSABUF buf_desc;
     #endif
 
-        char buf[max_rx_len];
+        size_t buf_len_;
+        char *buf;
 
         /* current number of bytes sent. */
         size_t bytes_tx;
@@ -36,7 +37,11 @@ namespace transport
         io::type type;
 
         io_ctx(io::type type);
-        ~io_ctx() {}
+        io_ctx(io::type type, const unsigned int buf_len);
+        ~io_ctx()
+        {
+            delete[] buf;
+        }
 
         /* Writes the data pointed to by the string view into the io buffer.
         Also updates the buffer descriptors and metadata. */

@@ -1,7 +1,6 @@
 In Progress:
 ------------
 
-- improve routing file.
 - write response builder methods, maybe for each request method we have a response builder.
 - add linux support to sockpp. (HIGH PRIORITY). Make linux sockets non-blocking, since we will be calling them only when they are ready.
 
@@ -9,6 +8,7 @@ In Progress:
 Specific Tasks:
 ---------------
 
+- use configuration file. avoids having to recompile when values are changed.
 - add a connection idle timeout which when triggered closes the connection.
 - support compress, deflate, identity and gzip encodings.
 - write test to stress number of concurrent connections.
@@ -39,3 +39,11 @@ Done:
 - split configuration struct into transport and http configs.
 - add timeout to request handlers.
 - fix uri error propagation (used to be using exceptions, now using err handler field of req struct).
+
+Today:
+------
+
+- write tests for:
+  1. testing server when response does not fit in a single io_ctx. DONE
+  2. testing pipelined requests.
+- remove the function pointer in routing.h, we can use more modern c++.

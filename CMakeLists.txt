@@ -10,6 +10,10 @@ set(LIBRARY_OUTPUT_PATH ${CMAKE_BINARY_DIR}/lib)
 
 set(CMAKE_BUILD_TYPE Debug)
 
+if(WIN32)
+    add_compile_definitions(NOMINMAX=1)
+endif(WIN32)
+
 include(FetchContent)
 FetchContent_Declare(
   googletest

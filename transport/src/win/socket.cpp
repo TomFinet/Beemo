@@ -15,6 +15,7 @@ namespace transport {
     {
         socket_t conn_handle = WSAAccept(handle_, nullptr, nullptr, nullptr, 0);
         if (conn_handle == invalid_handle) {
+            get_last_error();
             throw transport_err();
         }
         return conn_handle;
