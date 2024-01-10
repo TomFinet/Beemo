@@ -8,7 +8,7 @@ namespace transport
     constexpr int block_indefinitely = -1;
     constexpr int default_events = EPOLLHUP | EPOLLET | EPOLLONESHOT;
 
-    epoll_ctx::epoll_ctx(const size_t max_events) : max_events_(max_events)
+    epoll_ctx::epoll_ctx(const int max_events) : max_events_(max_events)
     {
         logger_ = spdlog::stdout_color_mt("epoll_ctx");
         epoll_handle_ = epoll_create1(EPOLL_CLOEXEC);
@@ -73,9 +73,9 @@ namespace transport
         return outgoing_io_.at(skt_handle).get();
     }
 
-    int epoll_ctx::wait(epoll_event *ready_events)
+    int epoll_ctx::wait(epoll_event *ready_events, size_t len)
     {
-        return epoll_wait(epoll_handle_, ready_events, max_events_, block_indefinitely);
+        return epoll_wait(epoll_handle_, ready_events, len, block_indefinitely);
     }
 
     void epoll_ctx::remove_event(const socket_t skt_handle)

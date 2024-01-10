@@ -20,7 +20,7 @@ namespace transport
         
         private:
             io_queue_t epoll_handle_;
-            size_t max_events_;
+            int max_events_;
             
             std::unordered_map<socket_t, std::unique_ptr<epoll_event>> events_;
             std::unordered_map<socket_t, std::unique_ptr<io_ctx>> outgoing_io_;
@@ -30,7 +30,7 @@ namespace transport
             std::shared_ptr<spdlog::logger> logger_;
 
         public:
-            epoll_ctx(const size_t max_events);
+            epoll_ctx(const int max_events);
             ~epoll_ctx();
 
             void add_event(int event_code, socket_t skt_handle);
@@ -43,7 +43,7 @@ namespace transport
             epoll_event* get_event(const socket_t skt_handle);
             void remove_event(const socket_t skt_handle);
 
-            int wait(epoll_event *event_arr);
+            int wait(epoll_event *event_arr, size_t len);
             size_t size(void);
 
     };

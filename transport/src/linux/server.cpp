@@ -144,7 +144,7 @@ namespace transport
     {
         std::array<epoll_event, max_epoll_ready_events> ready_events;
         while (true) {
-            int nready = epoll_ctx_->wait(ready_events.data());
+            int nready = epoll_ctx_->wait(ready_events.data(), max_epoll_ready_events);
             for (int i = 0; i < std::min(nready, max_epoll_ready_events); i++) {
                 epoll_event event = ready_events[i];
 
