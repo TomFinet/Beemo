@@ -7,6 +7,7 @@
 #include <functional>
 #include <thread>
 #include <array>
+#include <string_view>
 
 #include <transport/platform.h>
 #include <transport/conn_ctx.h>
@@ -56,7 +57,7 @@ namespace transport
             std::shared_ptr<epoll_ctx> epoll_ctx_;
         #elif defined(WIN32)
             io_queue_t queue_handle_;
-        #endif
+	#endif
 
             void register_socket(const socket_t handle, std::shared_ptr<conn_ctx> conn); 
 

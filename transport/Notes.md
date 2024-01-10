@@ -85,13 +85,8 @@ The http module calls conn_ctx->rx/conn_ctx->tx to start a recv/send.
 conn_ctx->rx calls the transport server to actually recv/send the message.
 
 
-
-
-
-
-
-
-
+make a epoll queue class that works like the windows iocp interface.
+methods to add io events to the queue, then the socket, server and conn_ctx can share a pointer to the single epoll class.
 
 
 
