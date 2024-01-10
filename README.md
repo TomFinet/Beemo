@@ -1,8 +1,8 @@
-HTTCPP: C++ HTTP server
------------------------
+Beemo: A basic web server program
+---------------------------------
 
-Provides a modular HTTP server supporting:
+Beemo will try its hardest to serve you effectively by
 
-- Windows
-- Request Thread Pool
-- Websockets
+1. IOCP for Windows
+2. EPOLL for linux
+3. Simple HTTP route API
