@@ -5,12 +5,15 @@ namespace transport
 {
 
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,
-              const unsigned short linger_sec, const unsigned int rx_buf_len)
+                        const unsigned short linger_sec, const unsigned int rx_buf_len,
+                        const unsigned int rx_idle_timeout)
     {
         sock_.create_handle(AF_INET, SOCK_STREAM, 0);
 
-        int one = 1;
-        sock_.set_options(SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<char*>(&one), sizeof(one));
+        int set = 1;
+        /* TODO: what does this line do? */
+        //sock_.set_options(SOL_SOCKET, SO_KEEPALIVE, reinterpret_cast<char*>(&set), sizeof(set));
+        sock_.set_options(SOL_SOCKET, SO_REUSEADDR, reinterpret_cast<char*>(&set), sizeof(set));
 
         struct sockaddr_in local;
         local.sin_family = AF_INET;

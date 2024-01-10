@@ -21,6 +21,8 @@ namespace transport {
         return conn_handle;
     }
 
+    void socket::non_blocking(void) { }
+
     void socket::rx(io_ctx *const io, const int buf_num)
     {
         unsigned long nbytes = 0;

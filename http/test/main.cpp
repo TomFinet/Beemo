@@ -12,7 +12,7 @@ struct http::config config;
 
 std::string home_handler(struct req *req)
 {
-    return "<html><h1>Tom's Corner of the Web.</h1></html>";
+    return "<h>Length is 19</h>";
 }
 
 int main()

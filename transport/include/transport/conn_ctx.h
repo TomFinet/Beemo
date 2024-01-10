@@ -1,5 +1,6 @@
 #pragma once
 
+#include <transport/platform.h>
 #include <transport/socket.h>
 #include <transport/io_ctx.h>
 
@@ -14,27 +15,24 @@ namespace transport
     constexpr unsigned int conn_rx_closed = 2;
     constexpr unsigned int conn_tx_closed = 4;
 
-
     /* Represents a transport layer connection. */
     class conn_ctx {
         
         private:
-            std::unique_ptr<socket> skt;
-            io_queue_t queue_handle_;
-
+            std::unique_ptr<socket> skt_;
             unsigned int status;
 
             /* data rx'ed on this connection is appended to rx_buf. */
             std::string rx_buf_;
 
-            void __request_rx(void);
-            void __request_tx(std::string_view msg);
+            virtual void __request_rx(void) { }
+            virtual void __request_tx(std::string_view msg) { }
         
         public:
             conn_ctx() : status(conn_keep_alive) { }
-
-            conn_ctx(socket_t skt_handle, io_queue_t queue_handle)
-                : skt(std::make_unique<socket>(skt_handle)), queue_handle_(queue_handle), status(conn_keep_alive) { }
+            conn_ctx(socket_t skt_handle)
+                : skt_(std::make_unique<socket>(skt_handle)),
+                status(conn_keep_alive) { }
 
             void request_rx(void)
             {
@@ -57,14 +55,13 @@ namespace transport
 
             void clear_rx_buf(void)
             {
-                std::string clear_buf;
-                rx_buf_.swap(clear_buf);
+                rx_buf_.clear();
             }
 
             void close_tx(void)
             {
                 if (!(status & conn_tx_closed)) {
-                    skt->close_tx();
+                    skt_->close_tx();
                     status |= conn_tx_closed;
                 }
             }
@@ -79,9 +76,20 @@ namespace transport
                 return rx_buf_;
             }
 
+            socket* skt(void)
+            {
+                if (skt_) {
+                    return skt_.get();
+                } 
+                return nullptr;
+            }
+
             socket_t skt_handle(void)
             {
-                return skt->handle();
+                if (skt_) {
+                    return skt_->handle();
+                }
+                return invalid_handle;
             }
 
             bool keep_alive(void)
@@ -89,12 +97,17 @@ namespace transport
                 return status & conn_keep_alive;
             }
 
-            ~conn_ctx()
+            void toggle_status(unsigned int flag, bool active)
             {
-                close_rx();
-                close_tx();
-                skt->close();
+                if (active) {
+                    status |= flag;
+                }
+                else {
+                    status &= ~flag;
+                }
             }
+
+            ~conn_ctx() { }
     };
 
 }

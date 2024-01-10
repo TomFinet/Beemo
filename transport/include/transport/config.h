@@ -14,10 +14,10 @@ namespace transport
         constexpr unsigned int default_processing_timeout_sec = 2;
         constexpr unsigned int default_idle_connection_timeout_ms = 5000;
         constexpr unsigned short default_max_linger_sec = 2;
-        constexpr int default_num_req_handler_threads = 8;
+        constexpr int default_num_req_handler_threads = 4;
         constexpr unsigned int default_rx_buf_len = 1024;
 
-        constexpr unsigned int default_listening_port = 9007;
+        constexpr unsigned int default_listening_port = 9000;
         constexpr auto &default_listening_ip = "127.0.0.1";
 
         constexpr auto &default_logger_name = "transport";

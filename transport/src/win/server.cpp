@@ -1,5 +1,6 @@
 #include <transport/server.h>
 #include <transport/io_ctx.h>
+#include "win_conn.h"
 
 
 namespace transport
@@ -24,11 +25,20 @@ namespace transport
         }
     }
 
+    std::shared_ptr<conn_ctx> server::add_conn(socket_t skt_handle)
+    {
+        std::shared_ptr<win_conn> conn = std::make_shared<win_conn>(skt_handle);
+        logger_->info("Connections: {0:d}", conns_.size());
+        std::unique_lock<std::mutex> lock(conn_mutex_);
+        conns_[conn->skt_handle()] = conn;
+        return conn;
+    }
+
     void server::register_socket(const socket_t handle, conn_ctx *const conn)
     {
         io_queue_t res = CreateIoCompletionPort((HANDLE)handle, queue_handle_, (DWORD_PTR)conn, 0);
         if (res == nullptr) {
-            throw transport_err(skt_reg_fail);
+            throw transport_err();
         }
         queue_handle_ = res;
     }
@@ -53,11 +63,7 @@ namespace transport
             }
 
             if (io_size == 0) {
-                { 
-                    std::unique_lock<std::mutex> lock(conn_mutex_);
-                    conns_.erase(conn->skt_handle());
-                }
-                on_client_close(conn->skt_handle());
+                remove_conn(conn->skt_handle());
                 continue;
             }
 

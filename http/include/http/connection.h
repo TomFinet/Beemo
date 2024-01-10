@@ -15,7 +15,7 @@ namespace http
     struct connection {
         std::unique_ptr<req> req_;
         std::unique_ptr<response> res_;
-        std::shared_ptr<transport::conn_ctx> transport_conn_; 
+        std::shared_ptr<transport::conn_ctx> transport_conn_;
 
         /* index we have parsed up to, so that next parse can avoid redoing the same work. */
         size_t parsed_to_idx_;

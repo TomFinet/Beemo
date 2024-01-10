@@ -9,7 +9,7 @@
 
 namespace transport
 {
-    constexpr unsigned int default_buf_len = 2000;
+    constexpr unsigned int default_buf_len = 1 << 10;
 
     namespace io
     {

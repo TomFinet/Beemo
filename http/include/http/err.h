@@ -4,6 +4,7 @@
 
 #include <string>
 #include <memory>
+#include <iostream>
 
 
 namespace http
@@ -14,8 +15,13 @@ namespace http
             std::string reason_;
             unsigned short status_code_;
         public:
-            constexpr err_response_handler(const std::string &reason, const unsigned short status_code)
+            err_response_handler(const std::string &reason, const unsigned short status_code)
                 : reason_(reason), status_code_(status_code) { }
+            ~err_response_handler()
+            {
+                std::cout << "destroying err with code: " << status_code_ << std::endl;
+            }
+
             void handle(std::shared_ptr<connection> conn) const;
 
             const unsigned short status_code(void) const

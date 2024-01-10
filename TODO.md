@@ -40,10 +40,32 @@ Done:
 - add timeout to request handlers.
 - fix uri error propagation (used to be using exceptions, now using err handler field of req struct).
 
-Today:
-------
 
-- write tests for:
-  1. testing server when response does not fit in a single io_ctx. DONE
-  2. testing pipelined requests.
-- remove the function pointer in routing.h, we can use more modern c++.
+PROBLEMS:
+---------
+
+Not all connections are being closed. WHY?
+
+Maybe unrelated, but we store the transport connection pointer in two unordered_maps:
+1. The transport server's table of skt handles to connections
+2. The http server's table of skt handles to http connections,
+   since a http connection has a pointer to the underlying transport connection.
+
+Can't we just store it in the http server's map? Actually this is fine.
+
+
+BENCHMARKS:
+-----------
+
+1. Number of requests per second.
+2. Latency of a request.
+3. Throughput of server in bytes per second.
+
+It seems that the wrk project is well suited for creating
+large concurrent workloads.
+
+
+In edge triggered mode, we only get notified of events if the state goes from
+non-ready to ready. If we don't read/write all data to a socket while it is ready,
+such that it goes to non-ready, then it will stay ready and not show up in subsequent
+epoll_wait calls.

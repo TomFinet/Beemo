@@ -6,6 +6,7 @@
 
 #include <unordered_map>
 #include <functional>
+#include <iostream>
 
 
 namespace
@@ -44,7 +45,7 @@ namespace http
 
         if (req->parse_state == start_line) {
             req_line_end = raw_req.find(crlf);
-            if (req_line_end == std::string_view::npos) {
+            if (req_line_end == std::string_view::npos) {  
                 goto err_response;
             }
 

@@ -14,6 +14,9 @@ if(WIN32)
     add_compile_definitions(NOMINMAX=1)
 endif(WIN32)
 
+#add_compile_options(-fsanitize=address -fno-omit-frame-pointer -O1)
+#add_link_options(-fsanitize=address)
+
 include(FetchContent)
 FetchContent_Declare(
   googletest

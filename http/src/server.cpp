@@ -15,7 +15,7 @@ namespace http
             [this](std::shared_ptr<transport::conn_ctx> conn) { this->handle_connection(conn); },
             [this](transport::socket_t skt_handle) { this->handle_rx(skt_handle); },
             [this](transport::socket_t skt_handle) { this->handle_tx(skt_handle); },
-            [this](transport::socket_t skt_handle) { this->remove_conn(skt_handle); },
+            [this](transport::socket_t skt_handle) { this->handle_disconnect(skt_handle); },
             [this](transport::socket_t skt_handle) { this->handle_timeout(skt_handle); },
             config_.transport
         );
@@ -29,8 +29,11 @@ namespace http
 
     void server::handle_connection(std::shared_ptr<transport::conn_ctx> transport_conn)
     {
-        add_conn(std::make_shared<connection>(transport_conn));
-        auto conn = connections_[transport_conn->skt_handle()]; 
+        std::shared_ptr<connection> conn = std::make_shared<connection>(transport_conn);
+        {
+            std::unique_lock<std::mutex> lock(conn_mutex_);
+            connections_[transport_conn->skt_handle()] = conn; 
+        }
         conn->rx();
     }
 
@@ -67,7 +70,7 @@ namespace http
         return;
 
     err:
-        logger_->error("Error {0:d} {1}", conn->req_->err->status_code(), conn->req_->err->reason());
+        logger_->error("[skt {2}] HTTP error {0} {1}", conn->req_->err->status_code(), conn->req_->err->reason(), conn->transport_conn_->skt_handle());
         conn->req_->err->handle(conn);
         conn->close_tx();
         return;
@@ -79,8 +82,10 @@ namespace http
     {
         std::shared_ptr<connection> conn = connections_[skt_handle];
 
+        /* TODO: use weak ptr maybe. */
         if (!conn->keep_alive()) {
-            remove_conn(conn->transport_conn_->skt_handle());
+            handle_disconnect(skt_handle);
+            logger_->info("[skt {0}] http connection closed", skt_handle);
         }
         else {
             conn->rx();
@@ -95,17 +100,10 @@ namespace http
         logger_->error("Timeout on skt {0:d}", skt_handle);
     }
 
-    void server::add_conn(std::shared_ptr<connection> conn)
-    {
-        std::unique_lock<std::mutex> lock(conn_mutex_);
-        connections_[conn->transport_conn_->skt_handle()] = conn;
-    }
-
-    void server::remove_conn(transport::socket_t skt_handle)
+    void server::handle_disconnect(transport::socket_t skt_handle)
     {
         std::unique_lock<std::mutex> lock(conn_mutex_);
         connections_.erase(skt_handle);
-        logger_->info("Connection closed: {0:d}", connections_.size());
     }
 
 }

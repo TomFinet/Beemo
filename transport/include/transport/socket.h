@@ -2,6 +2,7 @@
 
 #include <stdexcept>
 #include <memory>
+#include <iostream>
 
 #include <transport/platform.h>
 #include <transport/io_ctx.h>
@@ -24,6 +25,7 @@ namespace transport {
         
         ~socket()
         {
+            std::cout << "[skt " << handle_ << "] ~socket()";
             close();
         }
 
@@ -46,6 +48,15 @@ namespace transport {
         } 
 
         void create_handle(int family, int type, int protocol);
+        void blocking(bool block);
+        void close_tx(void);
+        void close(void);
+        
+        int rx(io_ctx *const io, const int buf_num);
+        int tx(io_ctx *const io, const int buf_num);
+        int get_last_error(void);
+
+        socket_t accept(void);
 
         void bind(const struct sockaddr *addr, unsigned int nbytes)
         {
@@ -62,8 +73,6 @@ namespace transport {
                 close();
             }
         }
-        
-        socket_t accept(void);
 
         void set_options(int level, int optname, const char* optval, int oplen)
         {
@@ -72,9 +81,6 @@ namespace transport {
                 close();
             }
         }
-
-        void rx(io_ctx *const io, const int buf_num);
-        void tx(io_ctx *const io, const int buf_num);
 
         socket_t handle(void)
         {
@@ -93,10 +99,5 @@ namespace transport {
                 close();
             }
         }
-
-        int get_last_error(void);
-
-        void close_tx(void);
-        void close(void);
     };
 }

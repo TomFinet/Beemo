@@ -1,6 +1,8 @@
 #include <transport/socket.h>
 
 #include <unistd.h>
+#include <fcntl.h>
+#include <iostream>
 
 
 namespace transport
@@ -10,7 +12,8 @@ namespace transport
     {
         handle_ = ::socket(family, type, protocol); 
         if (handle_ == invalid_handle) {
-            throw transport_err(skt_err);
+            last_error_ = errno;
+            throw transport_err();
         }   
     }
 
@@ -18,34 +21,53 @@ namespace transport
     {
         socket_t conn_handle = ::accept(handle_, NULL, NULL);
         if (conn_handle == invalid_handle) {
-            throw transport_err(skt_err);
+            last_error_ = errno; 
+            throw transport_err();
         }
         return conn_handle;
     }
 
-    void socket::rx(io_ctx *const io, const int buf_num)
+    void socket::blocking(bool block)
     {
-        int nbytes = recv(handle_, io->buf, sizeof(io->buf), 0);
-        if (nbytes == socket_error) {
-            close();
-            return;
+        int flags = fcntl(handle_, F_GETFL);
+        if (flags == socket_error) {
+            last_error_ = errno;
+            throw transport_err();
         }
-        io->bytes_rx = nbytes;
+
+        if (block) {
+            flags &= ~O_NONBLOCK;
+        }
+        else {
+            flags |= O_NONBLOCK;
+        }
+        
+        if (fcntl(handle_, F_SETFL, flags) == socket_error) {
+            last_error_ = errno;
+            throw transport_err();
+        }
     }
 
-    void socket::tx(io_ctx *const io, const int buf_num)
+    int socket::rx(io_ctx *const io, const int buf_num)
     {
-        int nbytes = send(handle_, io->buf, sizeof(io->bytes_to_tx), 0);
+        int nbytes = recv(handle_, io->buf + io->bytes_rx, io->buf_len_ - io->bytes_rx, 0);
         if (nbytes == socket_error) {
-            close();
-            return;
+            last_error_ = errno;
         }
-        io->bytes_tx += nbytes;
+        return nbytes;
+    }
+
+    int socket::tx(io_ctx *const io, const int buf_num)
+    {
+        int nbytes = send(handle_, io->buf + io->bytes_tx, io->bytes_to_tx - io->bytes_tx, MSG_NOSIGNAL);
+        if (nbytes == socket_error) {
+            last_error_ = errno;
+        }
+        return nbytes;
     }
 
     int socket::get_last_error(void)
     {
-        last_error_ = errno;
         return last_error_;
     }
 
