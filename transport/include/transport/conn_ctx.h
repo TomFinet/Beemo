@@ -27,12 +27,15 @@ namespace transport
 
             virtual void __request_rx(void) { }
             virtual void __request_tx(std::string_view msg) { }
-        
+
         public:
             conn_ctx() : status_(conn_keep_alive) { }
             conn_ctx(socket_t skt_handle)
                 : skt_(std::make_unique<socket>(skt_handle)), status_(0) { }
             ~conn_ctx() { }
+
+            /* specific to linux, this is ugly. */
+            virtual io_ctx* tx_io(void) { return nullptr; }
 
             void request_rx(void)
             {

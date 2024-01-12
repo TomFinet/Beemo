@@ -105,10 +105,10 @@ namespace transport
 
     void server::handle_out(std::shared_ptr<conn_ctx> conn)
     {
-        /* TODO: store io_ctx as a field in conn_ctx. Avoids having more key value stores. */
-        io_ctx *const tx_io = epoll_ctx_->get_io(conn->skt_handle());
         std::string req_str;
         int nbytes = 0;
+        io_ctx* tx_io = conn->tx_io();
+
         while (tx_io->bytes_tx < tx_io->bytes_to_tx) {
             nbytes = conn->skt()->tx(tx_io, 1); 
             if (nbytes == socket_error) {

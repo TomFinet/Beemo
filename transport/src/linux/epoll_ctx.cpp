@@ -39,7 +39,7 @@ namespace transport
 
         int err = epoll_ctl(epoll_handle_, EPOLL_CTL_ADD, skt_handle, event.get());
         if (err == epoll_error) {
-            logger_->info("Failed EPOLL_CTL_ADD, errno: {}", errno);
+            logger_->info("Failed EPOLL_CTL_ADD, errno: {0}", errno);
             throw transport_err();
         }
 
@@ -55,26 +55,12 @@ namespace transport
 
         int err = epoll_ctl(epoll_handle_, EPOLL_CTL_MOD, skt_handle, event.get());
         if (err == epoll_error) {
-            logger_->info("Failed EPOLL_CTL_ADD, errno: {}", errno);
+            logger_->info("Failed EPOLL_CTL_ADD, errno: {0}", errno);
             throw transport_err();
         }
 
         std::unique_lock<std::mutex> lock(events_mutex_);
         events_[skt_handle] = std::move(event);
-    }
-
-    void epoll_ctx::add_io(socket_t skt_handle, std::string_view msg)
-    {
-        std::unique_ptr<io_ctx> tx_io = std::make_unique<io_ctx>(io::type::tx, msg.size());
-        tx_io->write_buf(msg);
-        std::unique_lock<std::mutex> lock(outgoing_mutex_);
-        outgoing_io_[skt_handle] = std::move(tx_io);
-    }
-
-    io_ctx* epoll_ctx::get_io(socket_t skt_handle)
-    {
-        std::unique_lock<std::mutex> lock(outgoing_mutex_);
-        return outgoing_io_.at(skt_handle).get();
     }
 
     int epoll_ctx::wait(epoll_event *ready_events, size_t len)
@@ -84,14 +70,8 @@ namespace transport
 
     void epoll_ctx::remove_event(const socket_t skt_handle)
     {
-        {
-            std::unique_lock<std::mutex> lock(events_mutex_);
-            events_.erase(skt_handle);
-        }
-        {
-            std::unique_lock<std::mutex> lock(outgoing_mutex_);
-            outgoing_io_.erase(skt_handle);
-        }
+        std::unique_lock<std::mutex> lock(events_mutex_);
+        events_.erase(skt_handle);
     }
 
     size_t epoll_ctx::size(void)
