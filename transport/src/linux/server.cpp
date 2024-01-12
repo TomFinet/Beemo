@@ -38,7 +38,7 @@ namespace transport
 
     void server::register_socket(const socket_t _, std::shared_ptr<conn_ctx> conn)
     {
-        epoll_ctx_->add_event(EPOLLIN, conn->skt_handle());
+        epoll_ctx_->add_event(0, conn->skt_handle());
     }
     
     std::shared_ptr<conn_ctx> server::add_conn(socket_t skt_handle)
@@ -88,12 +88,12 @@ namespace transport
         for (const auto& io : rx_ios) {
             rx_string.append(io->buf, io->bytes_rx);
         }
-        conn->toggle_status(conn_keep_alive, false);
         if (!rx_string.empty()) {
             logger_->info("[skt {0}] rx {1:d} bytes", conn->skt_handle(), rx_string.size());
             conn->on_rx(rx_string);
             on_rx(conn->skt_handle());
         }
+        /* TODO: what does nbytes = 0 mean. How should we respond? */
         if (!peer_has_closed) {
             return;
         }
@@ -123,7 +123,7 @@ namespace transport
 
         logger_->info("[skt {0}] tx completed {1} bytes", conn->skt_handle(), tx_io->bytes_to_tx);
         on_tx(conn->skt_handle());
-        if (!conn->keep_alive()) {
+        if (!conn->status() & conn_keep_alive) {
             logger_->info("[skt {0}] tx closing", conn->skt_handle(), tx_io->bytes_to_tx);
             goto close;
         }

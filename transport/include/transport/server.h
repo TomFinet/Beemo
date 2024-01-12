@@ -96,7 +96,6 @@ namespace transport
                         socket_t skt_handle = acc_.accept();
                         conn = add_conn(skt_handle);
                         conn->skt()->blocking(false);
-
                         register_socket(skt_handle, conn);
                         on_conn_(conn);
                     }
@@ -113,9 +112,9 @@ namespace transport
                 {
                     std::unique_lock<std::mutex> lock(conn_mutex_);
                     conns_.erase(skt_handle);
-                    logger_->info("[skt {0}] connection removed: {1}", skt_handle, conns_.size());
                 }
-                /* Notify the main thread that the number of connections has decreased. */
+                logger_->info("[skt {0}] connection removed: {1}", skt_handle, conns_.size());
+                /* notify main thread #conns decreased. */
                 conn_condition_.notify_one();
             }
             

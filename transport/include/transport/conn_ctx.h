@@ -20,7 +20,7 @@ namespace transport
         
         private:
             std::unique_ptr<socket> skt_;
-            unsigned int status;
+            unsigned int status_;
 
             /* data rx'ed on this connection is appended to rx_buf. */
             std::string rx_buf_;
@@ -29,21 +29,21 @@ namespace transport
             virtual void __request_tx(std::string_view msg) { }
         
         public:
-            conn_ctx() : status(conn_keep_alive) { }
+            conn_ctx() : status_(conn_keep_alive) { }
             conn_ctx(socket_t skt_handle)
-                : skt_(std::make_unique<socket>(skt_handle)),
-                status(conn_keep_alive) { }
+                : skt_(std::make_unique<socket>(skt_handle)), status_(0) { }
+            ~conn_ctx() { }
 
             void request_rx(void)
             {
-                if (!(status & conn_rx_closed)) {
+                if (!(status_ & conn_rx_closed)) {
                     __request_rx();
                 }
             }
 
             void request_tx(std::string_view msg)
             {
-                if (!(status & conn_tx_closed)) {
+                if (!(status_ & conn_tx_closed)) {
                     __request_tx(msg);
                 }
             }
@@ -60,15 +60,15 @@ namespace transport
 
             void close_tx(void)
             {
-                if (!(status & conn_tx_closed)) {
+                if (!(status_ & conn_tx_closed)) {
                     skt_->close_tx();
-                    status |= conn_tx_closed;
+                    status_ |= conn_tx_closed;
                 }
             }
 
             void close_rx(void)
             {
-                status |= conn_rx_closed;
+                status_ |= conn_rx_closed;
             }
 
             std::string& rx_buf(void)
@@ -78,36 +78,28 @@ namespace transport
 
             socket* skt(void)
             {
-                if (skt_) {
-                    return skt_.get();
-                } 
-                return nullptr;
+                return skt_.get();
             }
 
             socket_t skt_handle(void)
             {
-                if (skt_) {
-                    return skt_->handle();
-                }
-                return invalid_handle;
+                return skt_->handle();
             }
 
-            bool keep_alive(void)
+            unsigned int status(void)
             {
-                return status & conn_keep_alive;
+                return status_;
             }
 
             void toggle_status(unsigned int flag, bool active)
             {
                 if (active) {
-                    status |= flag;
+                    status_ |= flag;
                 }
                 else {
-                    status &= ~flag;
+                    status_ &= ~flag;
                 }
             }
-
-            ~conn_ctx() { }
     };
 
 }

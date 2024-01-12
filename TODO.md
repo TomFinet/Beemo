@@ -69,3 +69,7 @@ In edge triggered mode, we only get notified of events if the state goes from
 non-ready to ready. If we don't read/write all data to a socket while it is ready,
 such that it goes to non-ready, then it will stay ready and not show up in subsequent
 epoll_wait calls.
+
+
+The server should be the sole manager of a connections lifetime.
+So shared_ptr with weak_ptrs

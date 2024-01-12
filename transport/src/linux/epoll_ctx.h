@@ -34,7 +34,7 @@ namespace transport
             ~epoll_ctx();
 
             void add_event(int event_code, socket_t skt_handle);
-            void modify_event(const socket_t skt_handle, int event_code);
+            void modify_event(const socket_t skt_handle, unsigned int event_code);
 
             void add_io(socket_t skt_handle, std::string_view msg);
             io_ctx* get_io(socket_t skt_handle);

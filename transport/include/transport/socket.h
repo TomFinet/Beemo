@@ -25,8 +25,11 @@ namespace transport {
         
         ~socket()
         {
+            if (handle_ != invalid_handle) {
+                shutdown(handle_, SHUT_RDWR);
+                close();
+            }
             std::cout << "[skt " << handle_ << "] ~socket()";
-            close();
         }
 
         static void startup(void)

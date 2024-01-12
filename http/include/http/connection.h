@@ -37,16 +37,6 @@ namespace http
         {
             transport_conn_->request_tx(res_->to_str());
         }
-
-        void close_rx(void) const
-        {
-            transport_conn_->close_rx();
-        }
-        
-        void close_tx(void) const
-        {
-            transport_conn_->close_tx();
-        }
         
         void reset_for_next(void)
         {
@@ -59,7 +49,7 @@ namespace http
 
         bool keep_alive(void) const
         {
-            return transport_conn_->keep_alive();
+            return transport_conn_->status() & transport::conn_keep_alive;
         }
     };
 

@@ -8,7 +8,7 @@ namespace transport
     namespace
     {
         /* default server resource configuration. */
-        constexpr unsigned int default_max_concurrent_connections = 1000;
+        constexpr unsigned int default_max_concurrent_connections = 10000;
         constexpr unsigned int default_max_connection_backlog = 5000;
         constexpr unsigned int default_max_peer_req_per_min = 50;
         constexpr unsigned int default_processing_timeout_sec = 2;

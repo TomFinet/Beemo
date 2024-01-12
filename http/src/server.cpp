@@ -23,7 +23,7 @@ namespace http
 
     void server::start(void)
     {
-        logger_->info("Starting HTTP server.");
+        logger_->info("Starting Beemo HTTP/1.1 web server.");
         transport_server_->start(); 
     }
 
@@ -72,7 +72,7 @@ namespace http
     err:
         logger_->error("[skt {2}] HTTP error {0} {1}", conn->req_->err->status_code(), conn->req_->err->reason(), conn->transport_conn_->skt_handle());
         conn->req_->err->handle(conn);
-        conn->close_tx();
+        handle_disconnect(skt_handle);
         return;
     rx:
         conn->rx();
@@ -81,13 +81,7 @@ namespace http
     void server::handle_tx(transport::socket_t skt_handle)
     {
         std::shared_ptr<connection> conn = connections_[skt_handle];
-
-        /* TODO: use weak ptr maybe. */
-        if (!conn->keep_alive()) {
-            handle_disconnect(skt_handle);
-            logger_->info("[skt {0}] http connection closed", skt_handle);
-        }
-        else {
+        if (conn->keep_alive()) {
             conn->rx();
         }
     }
@@ -96,7 +90,7 @@ namespace http
     {
         std::shared_ptr<connection> conn = connections_[skt_handle];
         timeout_handler.handle(conn);
-        conn->close_tx();
+        handle_disconnect(skt_handle);
         logger_->error("Timeout on skt {0:d}", skt_handle);
     }
 
@@ -104,6 +98,7 @@ namespace http
     {
         std::unique_lock<std::mutex> lock(conn_mutex_);
         connections_.erase(skt_handle);
+        logger_->info("[skt {0}] http connection closed", skt_handle);
     }
 
 }
