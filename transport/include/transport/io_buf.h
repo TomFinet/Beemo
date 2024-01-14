@@ -7,17 +7,12 @@
 #include <transport/platform.h>
 
 
-namespace transport
+namespace beemo
 {
     constexpr unsigned int default_buf_len = 1 << 10;
+    enum io_type { RX, TX };
 
-    namespace io
-    {
-        enum type { rx, tx };
-    }
-
-    /* Provides communication from the initialisation of overlapped IO op to its completion. */
-    struct io_ctx {
+    struct io_buf {
 
     #ifdef _WIN32
         WSAOVERLAPPED overlapped;
@@ -27,6 +22,8 @@ namespace transport
         size_t buf_len_;
         char *buf;
 
+        /* TODO: from io_type, we can deduce if we are dealing with bytes_tx or bytes_rx,
+           just have a single member called bytes. */
         /* current number of bytes sent. */
         size_t bytes_tx;
         /* total number of bytes to send. */
@@ -34,19 +31,15 @@ namespace transport
         /* bytes received. */
         size_t bytes_rx;
 
-        io::type type;
+        io_type type;
 
-        io_ctx(io::type type);
-        io_ctx(io::type type, const unsigned int buf_len);
-        ~io_ctx()
+        io_buf(io_type type);
+        io_buf(io_type type, const unsigned int buf_len);
+        ~io_buf()
         {
             delete[] buf;
         }
 
-        /* Writes the data pointed to by the string view into the io buffer.
-        Also updates the buffer descriptors and metadata. */
-        /* TODO: handle case where data does not fit the buffer. */
         void write_buf(std::string_view data);
     };
-    
 }

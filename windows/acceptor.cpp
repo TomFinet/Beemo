@@ -1,9 +1,8 @@
 #include <transport/acceptor.h>
 
 
-namespace transport
+namespace beemo
 {
-
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,
                         const unsigned short linger_sec, const unsigned int rx_buf_len,
                         const unsigned int rx_idle_timeout)
@@ -28,5 +27,4 @@ namespace transport
         sock_.set_options(SOL_SOCKET, SO_RCVBUF, (char *)&rx_buf_len, sizeof(rx_buf_len));
         sock_.set_options(SOL_SOCKET, SO_RCVTIMEO, (char*)&rx_idle_timeout, sizeof(rx_idle_timeout));
     }
-
 }

@@ -1,12 +1,12 @@
 #include <transport/socket.h>
 
 
-namespace transport {
-
+namespace beemo
+{
     void socket::create_handle(int family, int type, int protocol)
     {
-        handle_ = WSASocketW(family, type, protocol, nullptr, 0, WSA_FLAG_OVERLAPPED); 
-        if (handle_ == invalid_handle) {
+        if (WSASocketW(family, type, protocol, nullptr, 0, WSA_FLAG_OVERLAPPED) == invalid_handle) {
+            last_error_ = WSAGetLastError();
             throw transport_err();
         }
     }
@@ -15,13 +15,16 @@ namespace transport {
     {
         socket_t conn_handle = WSAAccept(handle_, nullptr, nullptr, nullptr, 0);
         if (conn_handle == invalid_handle) {
-            get_last_error();
+            last_error_ = WSAGetLastError();
             throw transport_err();
         }
         return conn_handle;
     }
 
-    void socket::non_blocking(void) { }
+    void socket::non_blocking(void)
+    {
+        return; /* TODO */
+    }
 
     void socket::rx(io_ctx *const io, const int buf_num)
     {
@@ -68,6 +71,5 @@ namespace transport {
         if (handle_ != invalid_handle) {
             closesocket(handle_);
         }
-    }
-
+    }   
 }

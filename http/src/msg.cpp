@@ -1,28 +1,41 @@
 #include <http/msg.h>
 
-#include <iostream>
 
-
-namespace http {
-
-    void req::print(void) const {
-        std::cout << "method: " << method << std::endl;
-        std::cout << "version: " << version.major << "." << version.minor << std::endl;
-        std::cout << "reg_name: " << uri.reg_name << std::endl; 
-        std::cout << "port: " << uri.port << std::endl;
-        std::cout << "scheme: " << uri.scheme << std::endl;
-        std::cout << "path: " << uri.path << std::endl;
-
-        for (auto &x : fields) {
-            std::cout << x.first << ": " << x.second << std::endl;
-        }
-
-        std::cout << std::endl;
-    }
-
+namespace beemo
+{
     bool req::has_err(void) const
     {
         return err != nullptr;
     }
 
+    bool req::is_parsing_headers(void) const
+    {
+        return (parse_state == start_line || parse_state == headers) && !has_err();
+    }
+
+    bool req::is_parsing_incomplete(void) const
+    {
+        return parse_state != complete && !has_err();
+    }
+
+    void resp::put_header(const std::string &header, const std::string &value)
+    {
+        fields[header] = value;
+    }
+    
+    std::string resp::to_str(void)
+    {
+        std::stringstream ss;
+        ss << "HTTP/" << version.major << "." << version.minor << " " << status_code << " " << reason << "\r\n";
+
+        for (auto &field : fields) {
+            ss << field.first << ": " << field.second << "\r\n";
+        }
+
+        if (!content.empty()) {
+            ss << "\r\n" << content;
+        }
+
+        return ss.str();
+    }
 }

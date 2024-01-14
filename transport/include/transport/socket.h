@@ -1,36 +1,22 @@
 #pragma once
 
-#include <stdexcept>
-#include <memory>
-#include <iostream>
-
 #include <transport/platform.h>
-#include <transport/io_ctx.h>
+#include <transport/io_buf.h>
 #include <transport/err.h>
 
+#include <memory>
 
-namespace transport {
 
-    class socket {
-
-    private:
+namespace beemo
+{
+    struct socket {
 
         socket_t handle_;
         int last_error_; 
 
-    public:
-
         socket() : handle_(invalid_handle), last_error_(0) {}
         socket(socket_t handle) : handle_(handle), last_error_(0) {}
-        
-        ~socket()
-        {
-            if (handle_ != invalid_handle) {
-                shutdown(handle_, SHUT_RDWR);
-                close();
-            }
-            std::cout << "[skt " << handle_ << "] ~socket()";
-        }
+        ~socket();
 
         static void startup(void)
         {
@@ -51,56 +37,21 @@ namespace transport {
         } 
 
         void create_handle(int family, int type, int protocol);
-        void blocking(bool block);
-        void close_tx(void);
-        void close(void);
-        
-        int rx(io_ctx *const io, const int buf_num);
-        int tx(io_ctx *const io, const int buf_num);
-        int get_last_error(void);
-
+        void bind(const sockaddr* addr, uint nbytes);
+        void listen(uint backlog);
         socket_t accept(void);
 
-        void bind(const struct sockaddr *addr, unsigned int nbytes)
-        {
-            int err = ::bind(handle_, addr, nbytes);
-            if (err == socket_error) {
-                close();
-            }
-        }
+        int rx(io_buf *const io, const int buf_num);
+        int tx(io_buf *const io, const int buf_num);
 
-        void listen(unsigned int backlog)
-        {
-            int err = ::listen(handle_, backlog);
-            if (err == socket_error) {
-                close();
-            }
-        }
-
-        void set_options(int level, int optname, const char* optval, int oplen)
-        {
-            int err = setsockopt(handle_, level, optname, optval, oplen);
-            if (err == socket_error) {
-                close();
-            }
-        }
-
-        socket_t handle(void)
-        {
-            return handle_;
-        }
-
-        void set_handle(socket_t handle)
-        {
-            handle_ = handle;
-        }
-
-        void address(struct sockaddr *name, socklen_t *namelen)
-        {
-            int err = getsockname(handle_, name, namelen);
-            if (err == socket_error) {
-                close();
-            }
-        }
+        int close_rx(void);
+        int close_tx(void);
+        int close_rtx(void);
+        
+        bool would_block(void);
+        void blocking(bool set);
+        void set_options(int level, int optname, const char* optval, int oplen);
+        void set_error(void);
+        void address(sockaddr* name, socklen_t* namelen);
     };
 }

@@ -1,8 +1,7 @@
 #include <threadpool/pool.h>
 
-namespace threadpool
+namespace beemo
 {
-
     pool::pool(size_t thread_num, unsigned int timeout_ms)
         : stop(false), thread_num(thread_num), timeout_ms(timeout_ms)
     {

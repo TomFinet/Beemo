@@ -6,17 +6,15 @@
 #include <iostream>
 
 
-namespace http
+namespace beemo
 {
-
-    /* Users of this API will register request handlers with this map. */
     using req_handler_map_t = std::unordered_map<struct req_id, req_handler_t, struct req_hasher>; 
     req_handler_map_t req_to_handler;
 
-    std::unique_ptr<struct response> route_to_resource_handler(req *const req)
+    std::unique_ptr<struct resp> route_to_resource_handler(req *const req)
     {
         req_id req_id {req->uri.path, req->method};
-        std::unique_ptr<struct response> response = std::make_unique<struct response>();
+        std::unique_ptr<struct resp> response = std::make_unique<struct resp>();
 
         if (!req_to_handler.contains(req_id)) {
             goto err_not_found;
@@ -39,15 +37,15 @@ namespace http
                 response->reason = "Created";
                 break;
         }
-        response->add_header("Content-Length", std::to_string(response->content.size()));
+        response->put_header("Content-Length", std::to_string(response->content.size()));
         return std::move(response);
 
     err_not_found:
         req->err = &not_found_handler;
-        return std::make_unique<struct response>();
+        return std::make_unique<struct resp>();
     err_internal:
         req->err = &internal_server_handler;
-        return std::make_unique<struct response>();
+        return std::make_unique<struct resp>();
     }
 
     void register_req_handler(const req_id &req_id, req_handler_t req_handler)

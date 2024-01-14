@@ -1,12 +1,16 @@
 #include <transport/socket.h>
 
-#include <unistd.h>
 #include <fcntl.h>
-#include <iostream>
+#include <unistd.h>
 
 
-namespace transport
+namespace beemo
 {
+    socket::~socket()
+    {
+        close_rtx();
+        close(handle_);
+    }
 
     void socket::create_handle(int family, int type, int protocol)
     {
@@ -21,13 +25,13 @@ namespace transport
     {
         socket_t conn_handle = ::accept(handle_, NULL, NULL);
         if (conn_handle == invalid_handle) {
-            last_error_ = errno; 
+            last_error_ = errno;
             throw transport_err();
         }
         return conn_handle;
     }
 
-    void socket::blocking(bool block)
+    void socket::blocking(bool set)
     {
         int flags = fcntl(handle_, F_GETFL);
         if (flags == socket_error) {
@@ -35,7 +39,7 @@ namespace transport
             throw transport_err();
         }
 
-        if (block) {
+        if (set) {
             flags &= ~O_NONBLOCK;
         }
         else {
@@ -48,7 +52,12 @@ namespace transport
         }
     }
 
-    int socket::rx(io_ctx *const io, const int buf_num)
+    bool socket::would_block(void)
+    {
+        return last_error_ == EAGAIN || last_error_ == EWOULDBLOCK;
+    }
+
+    int socket::rx(io_buf *const io, const int buf_num)
     {
         int nbytes = recv(handle_, io->buf + io->bytes_rx, io->buf_len_ - io->bytes_rx, 0);
         if (nbytes == socket_error) {
@@ -57,7 +66,7 @@ namespace transport
         return nbytes;
     }
 
-    int socket::tx(io_ctx *const io, const int buf_num)
+    int socket::tx(io_buf *const io, const int buf_num)
     {
         int nbytes = send(handle_, io->buf + io->bytes_tx, io->bytes_to_tx - io->bytes_tx, MSG_NOSIGNAL);
         if (nbytes == socket_error) {
@@ -66,23 +75,35 @@ namespace transport
         return nbytes;
     }
 
-    int socket::get_last_error(void)
+    int socket::close_rx(void)
     {
-        return last_error_;
+        int err = shutdown(handle_, SHUT_RD);
+        if (err == invalid_handle) {
+            last_error_ = errno;
+        }
+        return err;
     }
 
-    void socket::close_tx(void)
+    int socket::close_tx(void)
     {
-        if (handle_ != invalid_handle) {
-            shutdown(handle_, SHUT_WR);
+        int err = shutdown(handle_, SHUT_WR);
+        if (err == invalid_handle) {
+            last_error_ = errno;
         }
+        return err;
     }
 
-    void socket::close(void)
+    int socket::close_rtx(void)
     {
-        if (handle_ != invalid_handle) {
-            ::close(handle_);
+        int err = shutdown(handle_, SHUT_RDWR);
+        if (err == invalid_handle) {
+            last_error_ = errno;
         }
+        return err;
     }
-   
+
+    void socket::set_error(void)
+    {
+        last_error_ = errno;
+    }
 }

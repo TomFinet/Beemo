@@ -3,13 +3,13 @@
 #include "win_conn.h"
 
 
-namespace transport
+namespace beemo
 {
     /* Used as the thread limit when creating a completion port. A value
     of 0 is used to indicate: as many threads as this machine has processors. */
     constexpr int nproc = 0;
 
-    server::server(conn_cb_t on_conn, io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close,
+    eventloop::eventloop(conn_cb_t on_conn, io_cb_t on_rx, io_cb_t on_tx, io_cb_t on_client_close,
                    io_cb_t on_timeout, const config &config)
         : on_conn_(on_conn), on_rx(on_rx), on_tx(on_tx), on_client_close(on_client_close),
           on_timeout_(on_timeout), config_(config)
@@ -25,7 +25,7 @@ namespace transport
         }
     }
 
-    std::shared_ptr<conn_ctx> server::add_conn(socket_t skt_handle)
+    std::shared_ptr<conn_ctx> eventloop::add_conn(socket_t skt_handle)
     {
         std::shared_ptr<win_conn> conn = std::make_shared<win_conn>(skt_handle);
         logger_->info("Connections: {0:d}", conns_.size());
@@ -34,7 +34,7 @@ namespace transport
         return conn;
     }
 
-    void server::register_socket(const socket_t handle, conn_ctx *const conn)
+    void eventloop::register_socket(const socket_t handle, conn_ctx *const conn)
     {
         io_queue_t res = CreateIoCompletionPort((HANDLE)handle, queue_handle_, (DWORD_PTR)conn, 0);
         if (res == nullptr) {
@@ -44,7 +44,7 @@ namespace transport
     }
 
     /* Per thread event completion loop. */
-    void server::run_event_loop(void)
+    void eventloop::run_event_loop(void)
     {
         while (true) {
             unsigned long io_size = 0;

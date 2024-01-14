@@ -1,48 +1,35 @@
 #pragma once
 
-#include <http/connection.h>
+#include <http/conn.h>
 
 #include <string>
 #include <memory>
 #include <iostream>
 
 
-namespace http
+namespace beemo
 {
+    struct err_builder {
 
-    class err_response_handler {
-        private:
-            std::string reason_;
-            unsigned short status_code_;
-        public:
-            err_response_handler(const std::string &reason, const unsigned short status_code)
-                : reason_(reason), status_code_(status_code) { }
-            ~err_response_handler()
-            {
-                std::cout << "destroying err with code: " << status_code_ << std::endl;
-            }
+        const std::string reason_;
+        const unsigned short status_code_;
 
-            void handle(std::shared_ptr<connection> conn) const;
+        err_builder(const std::string &reason,
+                    const unsigned short status_code)
+            : reason_(reason), status_code_(status_code) { }
+        ~err_builder() = default;
 
-            const unsigned short status_code(void) const
-            {
-                return status_code_;
-            }
-
-            const std::string& reason(void) const
-            {
-                return reason_;
-            }
+        void build(resp*const resp) const;
     };
 
-    extern err_response_handler bad_req_handler;
-    extern err_response_handler not_found_handler;
-    extern err_response_handler timeout_handler;
-    extern err_response_handler len_required_handler;
-    extern err_response_handler uri_too_long_handler;
-    extern err_response_handler unsupported_media_type_handler;
-    extern err_response_handler misdirected_req_handler;
+    extern err_builder bad_req_handler;
+    extern err_builder not_found_handler;
+    extern err_builder timeout_handler;
+    extern err_builder len_required_handler;
+    extern err_builder uri_too_long_handler;
+    extern err_builder unsupported_media_type_handler;
+    extern err_builder misdirected_req_handler;
 
-    extern err_response_handler internal_server_handler; 
-    extern err_response_handler not_impl_handler;
+    extern err_builder internal_server_handler; 
+    extern err_builder not_impl_handler;
 }

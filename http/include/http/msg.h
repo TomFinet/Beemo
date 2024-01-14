@@ -7,9 +7,8 @@
 
 #include <uri/uri.h>
 
-namespace http
+namespace beemo
 {
-
     namespace
     {
         constexpr auto &host_header_token = "host";
@@ -45,7 +44,7 @@ namespace http
     enum parse_state_t { start_line, headers, content, chunk_trailers, complete };
 
     /* Break circular dependency. */
-    class err_response_handler;
+    class err_builder;
 
     struct req {
         req() : parse_state(start_line), err(nullptr), content_len(0), chunked_content_len(0) { }
@@ -53,7 +52,7 @@ namespace http
         /* Metadata to aid with request parsing. */
         target_form_t target_form;
         parse_state_t parse_state;
-        err_response_handler *err;
+        err_builder *err;
 
         struct version version;
         method_t method;
@@ -74,54 +73,27 @@ namespace http
 
         std::string content;
 
-        void print(void) const;
         bool has_err(void) const;
-
-        bool is_parsing_headers(void) const
-        {
-            return (parse_state == start_line || parse_state == headers) && !has_err();
-        }
-
-        bool is_parsing_incomplete(void) const
-        {
-            return parse_state != complete && !has_err();
-        }
+        bool is_parsing_headers(void) const;
+        bool is_parsing_incomplete(void) const;
     };
 
     constexpr int status_code_len = 4;
 
-    struct response {
+    struct resp {
+
         struct version version;
         unsigned short status_code;
         std::string reason; 
         std::unordered_map<std::string, std::string> fields;
         std::string content;
 
-        response() : version{1, 1} { }
-        response(unsigned short status_code, const std::string &reason)
+        resp() : version{1, 1} { }
+        resp(unsigned short status_code, const std::string &reason)
             : version{1, 1}, status_code(status_code), reason(reason) { }
+        ~resp() = default;
 
-
-        void add_header(const std::string &header, const std::string &value)
-        {
-            fields[header] = value;
-        }
-
-        std::string to_str(void)
-        {
-            std::stringstream ss;
-            ss << "HTTP/" << version.major << "." << version.minor << " " << status_code << " " << reason << "\r\n";
-
-            for (auto &field : fields) {
-                ss << field.first << ": " << field.second << "\r\n";
-            }
-
-            if (!content.empty()) {
-                ss << "\r\n" << content;
-            }
-
-            return ss.str();
-        }
+        void put_header(const std::string &header, const std::string &value);
+        std::string to_str(void);
     };
-
 }

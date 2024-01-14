@@ -1,19 +1,15 @@
 #pragma once
 
-#include <string>
-
 #include <transport/socket.h>
 
-namespace transport
+#include <string>
+
+
+namespace beemo
 {
-
-    class acceptor {
-
-        private:
+    struct acceptor {
 
             socket sock_;
-
-        public:
 
             acceptor() { }
             ~acceptor() { }
@@ -26,13 +22,9 @@ namespace transport
                       const unsigned short linger_sec, const unsigned int rx_buf_len,
                       const unsigned int rx_idle_timeout);
 
-            /**
-             * Accepts incoming connections.
-             */
             socket_t accept()
             {
                 return sock_.accept();
             }
     };
-
 }

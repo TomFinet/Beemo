@@ -13,7 +13,7 @@
 
 #endif
 
-namespace transport
+namespace beemo
 {
 
 #ifdef WIN32

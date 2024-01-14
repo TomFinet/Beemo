@@ -20,18 +20,17 @@ namespace
 
     /* maps encoding_t to the corresponding encoding class. */
     /* TODO: surely this can be constexpr. */
-    const std::unordered_map<http::encoding_t, http::decoder_func_t> decode_map
-    {
-        {http::invalid_encoding, http::encoding::decode},
-        {http::chunked, http::encoding::chunked::decode},
-        {http::identity, http::encoding::identity::decode},
-        {http::gzip, http::encoding::gzip::decode},
-        {http::compress, http::encoding::compress::decode},
-        {http::deflate, http::encoding::deflate::decode}
+    const std::unordered_map<beemo::encoding_t, beemo::decoder_t> decode_map {
+        {beemo::invalid_encoding, nullptr},
+        {beemo::chunked, beemo::decode_chunked},
+        {beemo::identity, beemo::decode_identity},
+        {beemo::gzip, beemo::decode_gzip},
+        {beemo::compress, beemo::decode_compress},
+        {beemo::deflate, beemo::decode_deflate}
     };
 }
 
-namespace http
+namespace beemo
 {
 
     size_t parse_headers(std::string_view raw_req, struct req *const req, const struct parse_ctx &ctx)
@@ -130,7 +129,7 @@ namespace http
     void parse_req_target(std::string_view req_target, req *const req)
     {
         if (req_target.at(0) == '*') {
-            req->target_form = http::asterik;
+            req->target_form = asterik;
             if (req_target.length() > 1 || req_target.at(0) != '*') {
                 req->uri.asterik = false; 
                 req->err = &bad_req_handler;
@@ -139,15 +138,15 @@ namespace http
             req->uri.asterik = true; 
         }
         else if (req_target.at(0) == '/') {
-            req->target_form = http::origin;
+            req->target_form = origin;
             uri::parse_uri(&req->uri, req_target, uri::flag_path | uri::flag_query);
         }
         else if (req_target.find('/') != std::string::npos) {
-            req->target_form = http::absolute;
+            req->target_form = absolute;
             uri::parse_uri(&req->uri, req_target, uri::flag_all);
         }
         else {
-            req->target_form = http::authority;
+            req->target_form = authority;
             uri::parse_uri(&req->uri, req_target, uri::flag_authority);
         }
 
@@ -211,15 +210,15 @@ namespace http
     void parse_host(std::string_view host_val, req *const req)
     {
         switch (req->target_form) {
-            case http::origin:
+            case origin:
                 /* req_target contains path and query. */
                 uri::parse_uri(&req->uri, host_val, uri::flag_scheme | uri::flag_authority);
                 break;
-            case http::authority:
+            case authority:
                 /* req_target contains host and port. */
                 uri::parse_uri(&req->uri, host_val, ~uri::flag_authority);
                 break;
-            case http::asterik:
+            case asterik:
                 /* req_target contains */
                 uri::parse_uri(&req->uri, host_val, uri::flag_scheme | uri::flag_authority);
                 break;
@@ -300,8 +299,8 @@ namespace http
         bool has_transfer_encodings;
         bool has_content_length;
 
-        if (req->uri.port != config.transport.listening_port || 
-           (req->uri.ipv4 != config.transport.listening_ip &&
+        if (req->uri.port != config.listening_port || 
+           (req->uri.ipv4 != config.listening_ip &&
             req->uri.reg_name != config.listening_reg_name)) {
             goto misdirected_req;
         }

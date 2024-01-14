@@ -11,13 +11,10 @@
 
 /** taken from https://github.com/progschj/ThreadPool/blob/master/ThreadPool.h */
 
-namespace threadpool
+namespace beemo
 {
-
     class pool {
-
         public:
-
             pool();
             /* Creates and starts the threadpool:
                 - threads are created
@@ -39,13 +36,11 @@ namespace threadpool
                     
                 {
                     std::unique_lock<std::mutex> lock(job_mutex);
-
                     if(stop)
                         throw std::runtime_error("Trying to submit to a stopped pool...");
 
                     jobs.emplace([job](){ (*job)(); });
                 }
-
                 condition.notify_one();
             }
 

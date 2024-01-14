@@ -11,7 +11,7 @@
 #include <utils/parsing.h>
 
 
-namespace http {
+namespace beemo {
 
     struct parse_ctx {
         const size_t start_idx;
@@ -32,7 +32,7 @@ namespace http {
     void parse_content(std::string_view raw_content, req *const req, const struct config &config);
     
     template<typename T>
-    std::vector<T> parse_field_list(req *const req, const std::string &field_name, err_response_handler *const err_handler)
+    std::vector<T> parse_field_list(req*const req, const std::string &field_name, err_builder*const err_handler)
     {
         /* relies on move semantics for copyless vector return. */
         std::vector<T> field_list;

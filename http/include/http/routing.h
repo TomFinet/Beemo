@@ -7,9 +7,8 @@
 #include <memory>
 
 
-namespace http
+namespace beemo
 {
-
     /* TODO: this hash function sucks, and will incurr more collisions than others. */
     struct req_id {
         std::string path;
@@ -31,7 +30,7 @@ namespace http
     /* TODO: modernise this. */
     typedef std::string (*req_handler_t)(struct req *);
 
-    std::unique_ptr<struct response> route_to_resource_handler(req *const req);
+    std::unique_ptr<struct resp> route_to_resource_handler(req *const req);
 
     void register_req_handler(const req_id &req_id, req_handler_t req_handler);
 

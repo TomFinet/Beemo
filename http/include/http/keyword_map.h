@@ -4,9 +4,8 @@
 
 #pragma once
 
-namespace http
+namespace beemo
 {
-
       #if !((' ' == 32) && ('!' == 33) && ('"' == 34) && ('#' == 35) \
             && ('%' == 37) && ('&' == 38) && ('\'' == 39) && ('(' == 40) \
             && (')' == 41) && ('*' == 42) && ('+' == 43) && (',' == 44) \
@@ -142,32 +141,32 @@ namespace http
             static struct http_kvp wordlist[] =
             {
                   {""}, {""}, {""},
-                  {"PUT", http::put},
-                  {"POST", http::post},
-                  {"utf-8", http::utf8},
+                  {"PUT", put},
+                  {"POST", post},
+                  {"utf-8", utf8},
                   {""},
-                  {"OPTIONS", http::options},
+                  {"OPTIONS", options},
                   {""},
-                  {"html", http::html},
-                  {"TRACE", http::trace},
-                  {"application", http::application},
-                  {"CONNECT", http::connect},
-                  {"compress", http::compress},
-                  {"text", http::text},
-                  {"close", http::close},
+                  {"html", html},
+                  {"TRACE", trace},
+                  {"application", application},
+                  {"CONNECT", connect},
+                  {"compress", compress},
+                  {"text", text},
+                  {"close", close},
                   {""},
-                  {"chunked", http::chunked},
-                  {"GET", http::get},
-                  {"HEAD", http::head},
-                  {"keep-alive", http::keep_alive},
-                  {"DELETE", http::del},
-                  {"deflate", http::deflate},
-                  {"identity", http::identity},
-                  {"gzip", http::gzip},
+                  {"chunked", chunked},
+                  {"GET", get},
+                  {"HEAD", head},
+                  {"keep-alive", keep_alive},
+                  {"DELETE", del},
+                  {"deflate", deflate},
+                  {"identity", identity},
+                  {"gzip", gzip},
                   {""}, {""}, {""}, {""},
-                  {"EXTENSION", http::extension},
+                  {"EXTENSION", extension},
                   {""}, {""}, {""}, {""},
-                  {"json", http::json}
+                  {"json", json}
             };
 
             if (len <= MAX_WORD_LENGTH && len >= MIN_WORD_LENGTH)

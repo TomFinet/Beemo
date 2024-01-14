@@ -1,12 +1,11 @@
 #include <transport/acceptor.h>
 
 
-namespace transport
+namespace beemo
 {
-
     void acceptor::open(const std::string &ip, const int port, const unsigned int backlog,
-                        const unsigned short linger_sec, const unsigned int rx_buf_len,
-                        const unsigned int rx_idle_timeout)
+        const unsigned short linger_sec, const unsigned int rx_buf_len,
+        const unsigned int rx_idle_timeout)
     {
         sock_.create_handle(AF_INET, SOCK_STREAM, 0);
 
@@ -23,5 +22,4 @@ namespace transport
         sock_.bind(reinterpret_cast<struct sockaddr*>(&local), sizeof(local));
         sock_.listen(backlog);
     }
-
 }
