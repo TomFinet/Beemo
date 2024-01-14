@@ -73,20 +73,19 @@ namespace beemo
             for (int i = 0; i < nready; i++) {
                 int mask = events[i].events;
                 int sktfd = events[i].data.fd;
-
-                if (mask & EPOLLERR) {
-                    logger_->error("[epollfd {0} | skt {1}] EPOLL error {2}", ctx_->epfd_, sktfd, errno);
-                    continue;
-                } 
-
+                
                 std::weak_ptr<conn> ev_conn = get_event(sktfd);
                 if (&ev_conn == nullptr || ev_conn.expired()) {
                     logger_->error("[skt {0}] EPOLL event ready on closed skt.", sktfd);
                     continue;
                 }
-
                 std::shared_ptr<conn> conn = ev_conn.lock();
-                if (mask & EPOLLIN) {
+
+                if (mask & EPOLLERR) {
+                    logger_->error("[epollfd {0} | skt {1}] EPOLL error {2}", ctx_->epfd_, sktfd, errno);
+                    conn->on_close_(conn);
+                } 
+                else if (mask & EPOLLIN) {
                     handle_in(conn);
                 }
                 else if (mask & EPOLLOUT) {
@@ -99,88 +98,46 @@ namespace beemo
         }
     }
     
+    /* We make some unecessary copies here, ideally, we
+    pass up a list of io_buf's that hold the rx data. */
     void evloop::handle_in(std::shared_ptr<conn> conn)
     {
         int nbytes = 0;
         bool peer_has_closed = false;
-        std::string rx_string; /* TODO: can we make this a string_view. */
-        std::vector<std::unique_ptr<io_buf>> rx_ios;
-
-        while (true) {
-            std::unique_ptr<io_buf> rx_io = std::make_unique<io_buf>(RX);
-            while (rx_io->bytes_rx < rx_io->buf_len_) {
-                nbytes = conn->skt_->rx(rx_io.get(), 1);
-
-                if (nbytes == socket_error) {
-                    if (conn->skt_->would_block()) {
-                        rx_ios.push_back(std::move(rx_io));
-                        goto done;
-                    }
-                    logger_->error("[skt {0}] rx socket error {1}", conn->skt_->handle_, conn->skt_->last_error_);
-                    goto close;
+        
+        switch (conn->do_rx()) {
+            case COMPLETE:
+                logger_->info("[skt {0}] peer graceful shutdown", conn->skt_->handle_);
+            case PARTIAL:
+                if (!conn->io_rx_.empty()) {
+                    logger_->info("[skt {0}] rx {1:d} bytes", conn->skt_->handle_, conn->io_rx_.size());
+                    conn->on_rx_(conn);
+                    return;
                 }
-                peer_has_closed = nbytes == 0;
-                if (peer_has_closed) {
-                    logger_->info("[skt {0}] peer graceful shutdown", conn->skt_->handle_);
-                    rx_ios.push_back(std::move(rx_io));
-                    goto done;
-                }
-                rx_io->bytes_rx += nbytes;
-            }
-            rx_ios.push_back(std::move(rx_io));
+            case ERROR:
+                logger_->error("[skt {0}] rx socket error {1}", conn->skt_->handle_, conn->skt_->last_error_);
+                conn->on_close_(conn);
         }
-
-    done:
-        for (const auto& io : rx_ios) {
-            rx_string.append(io->buf, io->bytes_rx);
-        }
-        if (!rx_string.empty()) {
-            logger_->info("[skt {0}] rx {1:d} bytes", conn->skt_->handle_, rx_string.size());
-            conn->io_rx_ = rx_string;
-            conn->on_rx_(conn->skt_->handle_);
-        }
-        return;
-
-        if (!peer_has_closed) {
-            return;
-        }
-        logger_->info("[skt {0}] rx closing gracefully", conn->skt_->handle_);
-
-    close:
-        conn->on_close_(conn->skt_->handle_);
-        logger_->info("[skt {0}] rx closing", conn->skt_->handle_);
     }
 
     void evloop::handle_out(std::shared_ptr<conn> conn)
     {
-        std::string req_str;
-        int nbytes = 0;
-        io_buf* tx_io = conn->io_tx_.get();
-
-        while (tx_io->bytes_tx < tx_io->bytes_to_tx) {
-            nbytes = conn->skt_->tx(tx_io, 1); 
-            if (nbytes == socket_error) {
-                if (conn->skt_->would_block()) {
-                    goto partial;
-                }
+        std::string_view req_str;
+        switch (conn->do_tx()) {
+            case COMPLETE:
+                logger_->info("[skt {0}] tx completed {1} bytes", conn->skt_->handle_, conn->io_tx_->bytes_to_tx);
+                conn->on_tx_(conn);
+                return;
+            case PARTIAL:
+                logger_->info("[skt {0}] tx partial {1} bytes", conn->skt_->handle_, conn->io_tx_->bytes_tx);
+                req_str = {conn->io_tx_->buf + conn->io_tx_->bytes_tx, conn->io_tx_->bytes_to_tx - conn->io_tx_->bytes_tx};
+                conn->prepare_tx(req_str);
+                reg(conn, EV_OUT);
+                return;
+            case ERROR:
+            default:
                 logger_->error("[skt {0}] tx socket error {1}", conn->skt_->handle_, conn->skt_->last_error_);
-                goto close;
-            }
-            tx_io->bytes_tx += nbytes;
-        }
-
-        logger_->info("[skt {0}] tx completed {1} bytes", conn->skt_->handle_, tx_io->bytes_to_tx);
-        conn->on_tx_(conn->skt_->handle_);
-        return;
-
-    partial:
-        logger_->info("[skt {0}] tx partial {1} bytes", conn->skt_->handle_, tx_io->bytes_tx);
-        req_str = {tx_io->buf + tx_io->bytes_tx, tx_io->bytes_to_tx - tx_io->bytes_tx};
-        conn->prepare_tx(req_str);
-        reg(conn, EV_OUT);
-        return;
-    
-    close:
-        conn->on_close_(conn->skt_->handle_);
+                conn->on_close_(conn);
+        } 
     }
 }

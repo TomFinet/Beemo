@@ -12,21 +12,26 @@
 
 namespace beemo
 {
-    /* TODO: this should probably be defined in the events module. */
-    using event_io = std::function<void(socket_t)>;
-
     constexpr unsigned int conn_keep_alive = 1;
     constexpr unsigned int conn_rx_closed = 2;
     constexpr unsigned int conn_tx_closed = 4;
     constexpr unsigned int conn_rtx_closed = 8;
 
+    enum io_status {
+        COMPLETE,
+        PARTIAL,
+        ERROR
+    };
+
     struct conn {
+
+        using event_io = std::function<void(std::shared_ptr<conn>)>;
 
         unsigned int status_;
         unsigned int parsed_to_idx_;
 
         std::unique_ptr<socket> skt_;
-        std::string_view io_rx_;
+        std::string io_rx_;
         std::unique_ptr<io_buf> io_tx_;
 
         event_io on_rx_;
@@ -47,5 +52,8 @@ namespace beemo
         void reset_state(void);
         void prepare_tx(void);
         void prepare_tx(std::string_view tx);
+
+        io_status do_rx(void);
+        io_status do_tx(void);
     };
 }
