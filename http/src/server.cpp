@@ -3,6 +3,8 @@
 #include <http/err.h>
 #include <http/routing.h>
 
+#include <utils/terminal_art.h>
+
 
 namespace beemo
 {
@@ -20,8 +22,8 @@ namespace beemo
     {
         {
             std::unique_lock<std::mutex> lock(conn_mtx_);
-            for (const auto& [sktfd, _] : conns_) {
-                on_close(sktfd);
+            for (const auto& [sktfd, conn] : conns_) {
+                on_close(conn);
             }
         }
         socket::cleanup();
@@ -29,8 +31,8 @@ namespace beemo
 
     void server::start(void)
     {
-        /* TODO: would be cool to get some Beemo terminal art here... */
         logger_->info("Starting Beemo HTTP/1.1 web server.");
+        logger_->info(beemo_terminal_art);
         
         for (int i = 0; i < config_.num_req_handler_threads; i++) {
             workers_->submit([this]() { evloop_->loop(config_.max_events_per_thread, -1); });
@@ -60,25 +62,21 @@ namespace beemo
     {
         std::shared_ptr<conn> c = std::make_shared<conn>(sktfd);
         c->skt_->blocking(false);
-        c->on_rx_ = [this](socket_t sktfd) { on_rx(sktfd); };
-        c->on_tx_ = [this](socket_t sktfd) { on_tx(sktfd); };
-        c->on_close_ = [this](socket_t sktfd) { on_close(sktfd); };
-        c->on_timeout_ = [this](socket_t sktfd) { on_timeout(sktfd); };
+        c->on_rx_ = [this](std::shared_ptr<conn> conn) { on_rx(conn); };
+        c->on_tx_ = [this](std::shared_ptr<conn> conn) { on_tx(conn); };
+        c->on_close_ = [this](std::shared_ptr<conn> conn) { on_close(conn); };
+        c->on_timeout_ = [this](std::shared_ptr<conn> conn) { on_timeout(conn); };
         {
             std::unique_lock<std::mutex> lock(conn_mtx_);
             conns_[sktfd] = c;
         }
         evloop_->reg(c, EV_IN);
-        logger_->info("[skt {0}] connection", sktfd);
     }
 
-    void server::on_rx(socket_t sktfd)
+    void server::on_rx(std::shared_ptr<conn> conn)
     {
-        std::shared_ptr<conn> conn = get_conn(sktfd);
-        std::string_view rx = conn->io_rx_;
-
         if (conn->req_->is_parsing_headers()) {
-            conn->parsed_to_idx_ = parse_headers(rx, conn->req_.get(), {conn->parsed_to_idx_, &config_});
+            conn->parsed_to_idx_ = parse_headers(conn->io_rx_, conn->req_.get(), {conn->parsed_to_idx_, &config_});
         }
 
         if (conn->req_->is_parsing_headers()) {
@@ -86,7 +84,7 @@ namespace beemo
         }
 
         if (!conn->req_->has_err()) {
-            parse_content(rx.substr(conn->parsed_to_idx_), conn->req_.get(), config_);
+            parse_content(conn->io_rx_.substr(conn->parsed_to_idx_), conn->req_.get(), config_);
             if (conn->req_->is_parsing_incomplete()) {
                 goto partial;
             }
@@ -112,42 +110,37 @@ namespace beemo
     err:
         logger_->error("[skt {2}] HTTP error {0} {1}",
                         conn->req_->err->status_code_,
-                        conn->req_->err->reason_, sktfd);
+                        conn->req_->err->reason_, conn->skt_->handle_);
         conn->req_->err->build(conn->resp_.get());
         conn->status_ &= ~conn_keep_alive;
         conn->prepare_tx(); 
         evloop_->reg(conn, EV_OUT); 
     }
     
-    void server::on_tx(socket_t sktfd)
+    void server::on_tx(std::shared_ptr<conn> conn)
     {
-        std::shared_ptr<conn> conn = get_conn(sktfd);
         if (conn->status_ & conn_keep_alive) {
             conn->reset_state();
             evloop_->reg(conn, EV_IN);
             return;
         }
-        on_close(sktfd);
+        on_close(conn);
     }
 
-    void server::on_close(socket_t sktfd)
+    void server::on_close(std::shared_ptr<conn> conn)
     {
-        std::unique_lock<std::mutex> lock(conn_mtx_);
-        conns_.erase(sktfd);
+        {
+            std::unique_lock<std::mutex> lock(conn_mtx_);
+            conns_.erase(conn->skt_->handle_);
+            logger_->info("[skt {0}] connection closed {1}", conn->skt_->handle_, conns_.size());
+        }
         conn_cond_.notify_one();
-        logger_->info("[skt {0}] connection closed {1}", sktfd, conns_.size());
     }
     
-    void server::on_timeout(socket_t sktfd)
+    void server::on_timeout(std::shared_ptr<conn> conn)
     {
-        timeout_handler.build(get_conn(sktfd)->resp_.get());
-        on_close(sktfd);
-        logger_->error("Timeout on skt {0:d}", sktfd);
-    }
-
-    std::shared_ptr<conn> server::get_conn(socket_t sktfd)
-    {
-        std::unique_lock<std::mutex> lock(conn_mtx_);
-        return conns_[sktfd];
+        timeout_handler.build(conn->resp_.get());
+        on_close(conn);
+        logger_->error("Timeout on skt {0}", conn->skt_->handle_);
     }
 }

@@ -34,12 +34,10 @@ namespace beemo
             std::condition_variable conn_cond_;
 
             void on_conn(socket_t sktfd);
-            void on_rx(socket_t sktfd);
-            void on_tx(socket_t sktfd);
-            void on_close(socket_t sktfd);
-            void on_timeout(socket_t skt_handle);
-            
-            std::shared_ptr<conn> get_conn(socket_t sktfd);
+            void on_rx(std::shared_ptr<conn> conn);
+            void on_tx(std::shared_ptr<conn> conn);
+            void on_close(std::shared_ptr<conn> conn);
+            void on_timeout(std::shared_ptr<conn> conn);
 
         public:
             server(const config &config);
