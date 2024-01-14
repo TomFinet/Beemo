@@ -14,7 +14,7 @@ namespace beemo
 
     std::string home_handler(struct req *req)
     {
-        return std::string("X", 1024);
+        return std::string("X", 1 << 10);
     }
 }
 
