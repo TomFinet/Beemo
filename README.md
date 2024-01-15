@@ -1,8 +1,6 @@
-Beemo: A basic web server program
----------------------------------
+Beemo: An HTTP/1.1 Web Server
+-----------------------------
 
-Beemo will try its hardest to serve you effectively by
+For a quick overview of Beemo please watch [this youtube video](https://www.youtube.com/watch?v=eeCiXEuCdPc).
 
-1. IOCP for Windows
-2. EPOLL for linux
-3. Simple HTTP route API
+Beemo is in its early days and should not be used for serious things.
