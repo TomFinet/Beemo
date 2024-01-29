@@ -19,13 +19,13 @@ namespace beemo
         /* default server resource configuration. */
         constexpr unsigned int default_max_events_per_thread = 1024;
         constexpr unsigned int default_max_concurrent_connections = 10000;
-        constexpr unsigned int default_max_connection_backlog = 5000;
+        constexpr unsigned int default_max_connection_backlog = 7000;
         constexpr unsigned int default_max_peer_req_per_min = 50;
         constexpr unsigned int default_processing_timeout_sec = 2;
         constexpr unsigned int default_idle_connection_timeout_ms = 5000;
         constexpr unsigned short default_max_linger_sec = 2;
-        constexpr int default_num_req_handler_threads = 4;
-        constexpr unsigned int default_rx_buf_len = 1024;
+        constexpr int default_num_req_handler_threads = 7;
+        constexpr unsigned int default_rx_buf_len = 64;
 
         constexpr unsigned int default_listening_port = 9000;
         constexpr auto &default_listening_ip = "127.0.0.1";
