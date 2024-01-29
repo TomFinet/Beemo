@@ -73,3 +73,7 @@ epoll_wait calls.
 
 The server should be the sole manager of a connections lifetime.
 So shared_ptr with weak_ptrs
+
+What if the server crashes?
+
+Add a feature to dynamically start a backup process running the server on crash event.

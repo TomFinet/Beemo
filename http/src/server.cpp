@@ -14,6 +14,7 @@ namespace beemo
         spdlog::set_pattern("[%H:%M:%S %z] [thread %t] %v");
 
         logger_ = spdlog::stdout_color_mt(config_.logger_name);
+        logger_->set_level(spdlog::level::err);
         evloop_ = std::make_unique<evloop>(config_.max_concurrent_connections);
         workers_ = std::make_unique<pool>(config_.num_req_handler_threads, config_.processing_timeout_sec);
     }
@@ -22,7 +23,7 @@ namespace beemo
     {
         {
             std::unique_lock<std::mutex> lock(conn_mtx_);
-            for (const auto& [sktfd, conn] : conns_) {
+            for (const auto& [_, conn] : conns_) {
                 on_close(conn);
             }
         }
@@ -98,8 +99,8 @@ namespace beemo
         if (conn->req_->has_err()) {
             goto err;
         }
-        
-        conn->prepare_tx(); 
+
+        conn->prepare_tx();
         evloop_->reg(conn, EV_OUT);
         return;
 

@@ -21,6 +21,7 @@ namespace beemo
     evloop::evloop(uint max_evs) : max_evs_(max_evs)
     {
         logger_ = spdlog::stdout_color_mt("ev_epoll");
+        logger_->set_level(spdlog::level::err);
         ctx_ = new __evloop_ctx(epoll_create(max_evs_));
         if (ctx_->epfd_ == ev_error) {
             throw std::exception();

@@ -6,9 +6,13 @@ set(SRCS
     src/msg.cpp
     src/server.cpp
     src/conn.cpp
-    
-    ${CMAKE_SOURCE_DIR}/linux/ev_epoll.cpp
 )
+
+if (LINUX)
+    set(SRCS ${SRCS} ${CMAKE_SOURCE_DIR}/linux/ev_epoll.cpp)
+elseif (WIN32)
+    set(SRCS ${SRCS} ${CMAKE_SOURCE_DIR}/windows/ev_iocp.cpp)
+endif ()
 
 add_library(http STATIC ${SRCS})
 target_link_libraries(http 
