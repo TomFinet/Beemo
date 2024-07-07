@@ -7,3 +7,5 @@ build/
 .vscode/*
 out/*
 out/
+*.data
+*.data.old
