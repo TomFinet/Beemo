@@ -9,9 +9,9 @@
 #include <http/msg.h>
 #include <http/conn.h>
 #include <http/config.h>
+#include <http/pool.h>
 
 #include <transport/acceptor.h>
-#include <threadpool/pool.h>
 #include <ev/evloop.h>
 
 #include <spdlog/spdlog.h>
