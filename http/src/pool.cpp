@@ -1,4 +1,4 @@
-#include <threadpool/pool.h>
+#include <http/pool.h>
 
 namespace beemo
 {
@@ -11,7 +11,7 @@ namespace beemo
                 for (;;) {
                     std::function<void()> job;
 
-                    {   /* unlock the mutex when exiting scope. */
+                    {
                         std::unique_lock<std::mutex> lock(job_mutex);
                         condition.wait(lock, [this]{ return !this->jobs.empty() || this->stop; });
                         
@@ -19,12 +19,11 @@ namespace beemo
                             return;
                         }
 
-                        /* jobs.front() is an rvalue, so do we really need move? */
-                        job = std::move(jobs.front());
+                        job = jobs.front();
                         jobs.pop();
                     } 
 
-                    /* call with a timeout */
+                    /* TODO: call with a timeout */
                     job();
                 }
             });
@@ -43,4 +42,16 @@ namespace beemo
         }
     }
 
+    void pool::submit(std::function<void()> job)
+    {
+        {
+            std::unique_lock<std::mutex> lock(job_mutex);
+            if(stop) {
+                return;
+            }
+
+            jobs.emplace(job);
+        }
+        condition.notify_one();
+    }
 }

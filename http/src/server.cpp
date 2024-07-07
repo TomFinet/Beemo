@@ -42,7 +42,7 @@ namespace beemo
         acc_.open(config_.listening_ip, config_.listening_port, config_.max_connection_backlog,
                 config_.max_linger_sec, config_.rx_buf_len, config_.idle_connection_timeout_ms);
 
-        for(;;) {
+        for (;;) {
             socket_t sktfd;
             {
                 std::unique_lock<std::mutex> lock(conn_mtx_);

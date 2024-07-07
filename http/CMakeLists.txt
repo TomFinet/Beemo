@@ -6,6 +6,7 @@ set(SRCS
     src/msg.cpp
     src/server.cpp
     src/conn.cpp
+    src/pool.cpp
 )
 
 if (LINUX)
@@ -18,7 +19,6 @@ add_library(http STATIC ${SRCS})
 target_link_libraries(http 
     utils
     transport
-    threadpool
     uri
     spdlog
 )
