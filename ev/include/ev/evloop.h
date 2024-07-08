@@ -29,10 +29,11 @@ namespace beemo
         __evloop_ctx* ctx_;
 
         uint max_evs_;
+        uint max_ev_exec_ms_;
         std::map<socket_t, std::weak_ptr<conn>> events_;
         std::mutex events_mtx_;
 
-        evloop(uint max_evs);     
+        evloop(uint max_evs, uint max_ev_exec_ms);
         ~evloop();
 
         int reg(std::shared_ptr<conn> conn, ev_mask mask);

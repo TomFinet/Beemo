@@ -2,8 +2,8 @@
 
 namespace beemo
 {
-    pool::pool(size_t thread_num, unsigned int timeout_ms)
-        : stop(false), thread_num(thread_num), timeout_ms(timeout_ms)
+    pool::pool(size_t thread_num)
+        : stop(false), thread_num(thread_num)
     {
         for (int i = 0; i < thread_num; i++) {
             workers.emplace_back([this]
@@ -23,7 +23,6 @@ namespace beemo
                         jobs.pop();
                     } 
 
-                    /* TODO: call with a timeout */
                     job();
                 }
             });

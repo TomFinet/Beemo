@@ -21,7 +21,7 @@ namespace beemo
         constexpr unsigned int default_max_concurrent_connections = 10000;
         constexpr unsigned int default_max_connection_backlog = 7000;
         constexpr unsigned int default_max_peer_req_per_min = 50;
-        constexpr unsigned int default_processing_timeout_sec = 2;
+        constexpr unsigned int default_processing_timeout_ms = 100;
         constexpr unsigned int default_idle_connection_timeout_ms = 5000;
         constexpr unsigned short default_max_linger_sec = 2;
         constexpr int default_num_req_handler_threads = 7;
@@ -52,7 +52,7 @@ namespace beemo
 
         /* Maximum number of ms spent handling a request before a timeout.
         DONE. TESTING NEEDED. */
-        unsigned int processing_timeout_sec = default_processing_timeout_sec;
+        unsigned int processing_timeout_ms = default_processing_timeout_ms;
 
         /* Maximum number of ms a connection can exist idle before it is closed. */
         unsigned int idle_connection_timeout_ms = default_idle_connection_timeout_ms;

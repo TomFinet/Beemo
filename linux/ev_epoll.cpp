@@ -4,6 +4,8 @@
 #include <transport/io_buf.h>
 #include <transport/socket.h>
 
+#include <utils/timeout.h>
+
 #include <map>
 #include <exception>
 
@@ -18,7 +20,8 @@ namespace beemo
         __evloop_ctx(int epfd) : epfd_(epfd) { }
     };
 
-    evloop::evloop(uint max_evs) : max_evs_(max_evs)
+    evloop::evloop(uint max_evs, uint max_ev_exec_ms)
+        : max_evs_{max_evs}, max_ev_exec_ms_{max_ev_exec_ms}
     {
         logger_ = spdlog::stdout_color_mt("ev_epoll");
         logger_->set_level(spdlog::level::err);
@@ -103,16 +106,13 @@ namespace beemo
     pass up a list of io_buf's that hold the rx data. */
     void evloop::handle_in(std::shared_ptr<conn> conn)
     {
-        int nbytes = 0;
-        bool peer_has_closed = false;
-        
         switch (conn->do_rx()) {
             case COMPLETE:
                 logger_->info("[skt {0}] peer graceful shutdown", conn->skt_->handle_);
             case PARTIAL:
                 if (!conn->io_rx_.empty()) {
                     logger_->info("[skt {0}] rx {1:d} bytes", conn->skt_->handle_, conn->io_rx_.size());
-                    conn->on_rx_(conn);
+                    utils::run_with_timeout(max_ev_exec_ms_, conn->on_rx_, conn);
                     return;
                 }
             case ERROR:

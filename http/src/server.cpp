@@ -15,8 +15,8 @@ namespace beemo
 
         logger_ = spdlog::stdout_color_mt(config_.logger_name);
         logger_->set_level(spdlog::level::err);
-        evloop_ = std::make_unique<evloop>(config_.max_concurrent_connections);
-        workers_ = std::make_unique<pool>(config_.num_req_handler_threads, config_.processing_timeout_sec);
+        evloop_ = std::make_unique<evloop>(config_.max_concurrent_connections, config_.processing_timeout_ms);
+        workers_ = std::make_unique<pool>(config_.num_req_handler_threads);
     }
 
     server::~server()
